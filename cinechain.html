@@ -1,9 +1,58 @@
+
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-  </head>
-  <body></body>
+    <link rel="stylesheet" href="STYLE.CSS">
+    <script src="SCRIPT.JS" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <nav class="Sidebar">
+        <ul>
+            <li class="selected">Dashboard</li>
+            <li>Movies</li>
+            <li>Platforms</li>
+            <li>Stakeholders</li>
+        </ul>
+    </nav>
+
+    <main style="margin-left:320px; padding:32px;">
+        <section id="dashboard">
+            <h1>Dashboard</h1>
+            <div style="display:flex; gap:32px; flex-wrap:wrap;">
+                <div class="metric">
+                    <h2>Total Revenue</h2>
+                    <p id="totalRevenue">$0</p>
+                </div>
+                <div class="metric">
+                    <h2>Total Attendance</h2>
+                    <p id="totalAttendance">0</p>
+                </div>
+                <div class="metric">
+                    <h2>Active Channels</h2>
+                    <p id="activeChannels">0</p>
+                </div>
+                <div class="metric">
+                    <h2>Movies Distributing</h2>
+                    <p id="moviesDistributing">0</p>
+                </div>
+            </div>
+
+            <div style="margin-top:40px;">
+                <div style="display:flex; align-items:center; gap:16px; margin-bottom: 16px;">
+                    <h2 style="margin:0;">Revenue Performance</h2>
+                    <select id="monthSelector" style="padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:1em;">
+                    </select>
+                </div>
+                <canvas id="revenueChart" width="1000" height="400"></canvas>
+            </div>
+
+        </section>
+    </main>
+</body>
+
 </html>
