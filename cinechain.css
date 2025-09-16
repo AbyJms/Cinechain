@@ -1,0 +1,103 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6fa;
+}
+
+.Sidebar {
+    height: 100vh;
+    width: 300px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #fff;
+    padding-top: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.Sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.Sidebar li {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    border-radius: 8px;
+    margin: 8px 12px;
+    position: relative;
+}
+
+.Sidebar li:hover {
+    background: linear-gradient(90deg, #4e54c8 0%, #8f94fb 100%);
+    color: #fff;
+    transform: translateX(8px) scale(1.05);
+    box-shadow: 0 2px 8px rgba(78,84,200,0.15);
+}
+
+.Sidebar li.selected {
+    background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 2px 12px rgba(221,36,118,0.15);
+    border-left: 6px solid #fff;
+    transform: translateX(12px) scale(1.07);
+}
+
+main {
+    margin-left: 320px;
+    padding: 32px;
+}
+
+.metric {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(30,60,114,0.08);
+    padding: 24px 32px;
+    min-width: 220px;
+    text-align: center;
+    flex: 1;
+}
+
+.metric h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.2em;
+    color: #2a5298;
+}
+
+.metric p {
+    font-size: 2em;
+    margin: 0;
+    font-weight: bold;
+    color: #222;
+}
+
+#dashboard h1 {
+    color: #1e3c72;
+    margin-bottom: 32px;
+}
+
+canvas {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(30,60,114,0.08);
+}
+
+canvas#revenueChart {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(30,60,114,0.18);
+    margin: 0 auto;
+    display: block;
+    border: 2px solid #2a5298;
+}
+
+#dashboard > div:last-child {
+    padding: 32px;
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(30,60,114,0.12);
+    margin-top: 40px;
+}
