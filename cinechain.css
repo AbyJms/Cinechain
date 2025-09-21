@@ -61,6 +61,12 @@ main {
     flex: 1;
 }
 
+.metric:hover {
+    box-shadow: 0 4px 24px rgba(30,60,114,0.12);
+    transform: translateY(-4px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
 .metric h2 {
     margin: 0 0 12px 0;
     font-size: 1.2em;
@@ -106,3 +112,41 @@ canvas#revenueChart {
     color: #1e3c72;
     margin-bottom: 32px;
 }
+
+#platforms {
+    color: #1e3c72;
+    margin-bottom: 32px;
+}
+
+.card { 
+    background: white; 
+    padding: 25px; 
+    border-radius: 16px; 
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1); 
+    flex: 1; min-width: 220px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; 
+}
+
+.card:hover { 
+    transform: translateY(-8px); 
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15); 
+}
+
+.movie-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.movie-card img {
+    width: 120px;
+    height: auto;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.movie-info {
+    flex: 1;
+}
+
