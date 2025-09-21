@@ -30,6 +30,14 @@ body {
     position: relative;
 }
 
+.Sidebar a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .Sidebar li:hover {
     background: linear-gradient(90deg, #4e54c8 0%, #8f94fb 100%);
     color: #fff;
@@ -129,7 +137,8 @@ canvas#revenueChart {
 
 .card:hover { 
     transform: translateY(-8px); 
-    box-shadow: 0 12px 24px rgba(0,0,0,0.15); 
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    background-color: #d8e6ff;
 }
 
 .movie-card {
