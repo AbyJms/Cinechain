@@ -101,3 +101,8 @@ canvas#revenueChart {
     box-shadow: 0 8px 32px rgba(30,60,114,0.12);
     margin-top: 40px;
 }
+
+#movies {
+    color: #1e3c72;
+    margin-bottom: 32px;
+}

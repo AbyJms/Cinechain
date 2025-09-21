@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateMetrics() {
         document.getElementById('totalRevenue').textContent = '$' + getRandomInt(50000, 200000).toLocaleString();
         document.getElementById('totalAttendance').textContent = getRandomInt(1000, 10000).toLocaleString();
-        document.getElementById('activeChannels').textContent = getRandomInt(5, 20);
+        document.getElementById('activeChannels').textContent = getRandomInt(5, 100);
         document.getElementById('moviesDistributing').textContent = getRandomInt(10, 50);
     }
 
-    // updateMetrics();
+    updateMetrics();
 
 
     setInterval(updateMetrics, 5000);
