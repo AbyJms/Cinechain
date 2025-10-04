@@ -170,3 +170,42 @@ canvas#revenueChart {
     margin-top: 0;
     color: #2a5298;
 }
+
+#ticketTrail tr:last-child td {
+    border-bottom: none;
+}
+
+#stakeholderSelector {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    margin-bottom: 12px;
+}
+
+#stakeholderReport {
+    margin-bottom: 18px;
+    font-size: 1.1em;
+    color: #1e3c72;
+}
+
+.compliance-ok {
+    color: green;
+    font-weight: bold;
+}
+
+.compliance-fail {
+    color: red;
+    font-weight: bold;
+}
+
+#trustboard {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(30,60,114,0.08);
+    padding: 24px 32px;
+    margin-top: 24px;
+    text-align: center;
+    color: #2a5298;
+    font-weight: bold;
+}
