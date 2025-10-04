@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: false,
             plugins: {
                 legend: { display: true },
-                title: { display: true, text: 'Real-Time Revenue by Theater', font: { size: 24 } }
+                title: { display: true, text: 'Aggregated Revenue by Theater', font: { size: 24 } }
             },
             scales: {
                 x: { title: { display: true, text: 'Theater', font: { size: 18 } } },
@@ -48,14 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    const socket = io.connect('http://127.0.0.1:5000');
-
     const totalRevenueEl = document.getElementById('totalRevenue');
     const totalAttendanceEl = document.getElementById('totalAttendance');
     
     async function updateDashboard() {
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/dashboard-data');
+            const response = await fetch('http://1227.0.0.1:5000/api/dashboard-data');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             const data = await response.json();
@@ -72,11 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    socket.on('dashboard_update', (eventData) => {
-        console.log('Update received from server:', eventData.message);
-        updateDashboard();
-    });
-
     updateDashboard();
+    setInterval(updateDashboard, 15000);
 
 });
