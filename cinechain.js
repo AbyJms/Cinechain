@@ -4,14 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const dashboardSection = document.getElementById('dashboard');
     const moviesSection = document.getElementById('movies');
 
-    // Navigation and section display logic
     function setActiveSection(section) {
-        // Hide all sections
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-        // Remove 'selected' from all buttons
         document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('selected'));
 
-        // Show the active section
         if (section === 'dashboard') {
             dashboardSection.classList.add('active');
             dashboardBtn.classList.add('selected');
@@ -21,35 +17,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Event Listeners for buttons
     dashboardBtn.addEventListener('click', () => setActiveSection('dashboard'));
     moviesBtn.addEventListener('click', () => setActiveSection('movies'));
 
-    // Check URL hash to set initial active section
     const initialHash = window.location.hash.substring(1);
-    if (initialHash === 'movies') {
-        setActiveSection('movies');
-    } else {
-        // Default to dashboard and ensure URL matches
-        setActiveSection('dashboard');
+    if (initialHash === 'movies') setActiveSection('movies');
+    else setActiveSection('dashboard');
+
+    // --- Fetch live data from backend API ---
+    async function loadDashboardData() {
+        try {
+            const res = await fetch('/api/dashboard-data');
+            const data = await res.json();
+
+            document.getElementById('moviesDistributing').textContent = data.movies_distributing;
+            document.getElementById('totalAttendance').textContent = data.total_attendance;
+            document.getElementById('totalRevenue').textContent = "$" + data.total_revenue.toLocaleString();
+
+        } catch (err) {
+            console.error('Error loading dashboard data:', err);
+        }
     }
 
-    // --- Metric and Chart Logic Removal/Simplification ---
-    // The metrics are now hardcoded in the HTML (0, 0, $50)
-    // The revenue chart logic is removed, as the 'No revenue data' state is hardcoded.
-
-    // Month Selector: Ensure it has the correct text and is functional (even if it does nothing)
-    const monthSelector = document.getElementById('monthSelector');
-    // We only need the "This Month" option as per the image.
-    // The HTML already contains a single option, so no JS modifications are strictly needed here.
-
-    // Simple scroll-to-section for the button click (optional but good practice)
-    document.querySelectorAll('.nav-button').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = button.id.includes('dashboard') ? 'dashboard' : 'movies';
-            // Update hash without scrolling if content is already visible
-            history.pushState(null, null, `#${targetId}`);
-        });
-    });
+    // Load data on startup and refresh every 30 seconds
+    loadDashboardData();
+    setInterval(loadDashboardData, 30000);
 });
