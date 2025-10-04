@@ -1,102 +1,71 @@
-import pandas as pd
 from flask import Flask, request, jsonify
-from sklearn.tree import DecisionTreeClassifier
-from flask_cors import CORS 
-import numpy as np
+from flask_socketio import SocketIO
+from flask_cors import CORS
+import sqlite3
 
-# --- 1. SETUP THE FLASK APPLICATION ---
 app = Flask(__name__)
-CORS(app) # Enable CORS for frontend communication
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- 2. MOCK DATASET FOR TRAINING THE AI MODEL (3 FEATURES) ---
-# Features: [Purchase Count (1-10), Genre Match (0.0-1.0), Social Engagement Score (0-10)]
-# Target: [Loyalty Status (0=Low Value, 1=High Value)]
+def init_db():
+    conn = sqlite3.connect('cinechain.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS sales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        movie_id TEXT NOT NULL,
+        theater_id TEXT NOT NULL,
+        tickets_sold INTEGER,
+        gross_revenue REAL
+    )
+    ''')
+    conn.commit()
+    conn.close()
 
-# Training Rule enforced by this data:
-# 1. Eligibility (AND): Must have PC>=1 AND GM>=0.2 AND ES>=4
-# 2. High Value (OR): Must be Eligible AND (PC>=5 OR GM>=0.8 OR ES>=8)
+init_db()
 
-data = {
-    # Test Data points are designed to test the eligibility AND OR rules:
-    'Purchase_Count':   [8, 6, 2, 4, 5, 1, 4, 3, 0, 3, 1, 10, 5, 1, 4, 7, 2, 3, 9, 1],
-    'Genre_Match':      [0.9, 0.7, 0.9, 0.8, 0.4, 0.2, 0.7, 0.5, 0.9, 0.1, 0.9, 1.0, 0.3, 0.1, 0.9, 0.2, 0.9, 0.7, 0.1, 0.2],
-    'Engagement_Score': [10, 9, 5, 8, 4, 4, 7, 6, 10, 8, 3, 10, 3, 5, 3, 4, 8, 7, 4, 1],
+@app.route('/api/sales', methods=['POST'])
+def add_sale():
+    data = request.json
+    conn = sqlite3.connect('cinechain.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO sales (movie_id, theater_id, tickets_sold, gross_revenue) VALUES (?, ?, ?, ?)",
+        (data['movie_id'], data['theater_id'], data['tickets_sold'], data['gross_revenue'])
+    )
+    conn.commit()
+    conn.close()
     
-    # Target Status based on the specific rules:
-    # 1 (HV): Meets all minimums AND hits one of the high thresholds.
-    # 0 (LV): Fails a minimum OR meets minimums but fails all high thresholds.
-    'Loyalty_Status': [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0] 
-}
+    socketio.emit('dashboard_update', {'message': 'New sales data arrived!'})
+    
+    return jsonify({"status": "success"}), 200
 
-df = pd.DataFrame(data)
+@app.route('/api/dashboard-data', methods=['GET'])
+def get_dashboard_data():
+    conn = sqlite3.connect('cinechain.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT SUM(gross_revenue) FROM sales")
+    total_revenue = cursor.fetchone()[0] or 0
+    
+    cursor.execute("SELECT SUM(tickets_sold) FROM sales")
+    total_attendance = cursor.fetchone()[0] or 0
+    
+    cursor.execute("SELECT theater_id, SUM(gross_revenue) FROM sales GROUP BY theater_id")
+    revenue_by_theater = cursor.fetchall()
+    
+    conn.close()
+    
+    chart_data = {
+        "labels": [row[0] for row in revenue_by_theater],
+        "data": [row[1] for row in revenue_by_theater]
+    }
+    
+    return jsonify({
+        "totalRevenue": f"${total_revenue:,.0f}",
+        "totalAttendance": f"{total_attendance:,}",
+        "chartData": chart_data
+    })
 
-# Separate features (X) and target (y)
-X = df[['Purchase_Count', 'Genre_Match', 'Engagement_Score']]
-y = df['Loyalty_Status']
-
-# Train the Decision Tree Classifier (The AI Model)
-model = DecisionTreeClassifier(random_state=42)
-model.fit(X, y)
-
-print("AI Loyalty Model Trained Successfully with custom two-stage rule logic. Ready for prediction.")
-
-# --- 3. API ENDPOINT FOR PREDICTION ---
-
-@app.route('/predict_loyalty', methods=['POST'])
-def predict_loyalty():
-    """
-    Receives user data (3 features) from the frontend and returns a loyalty prediction.
-    """
-    try:
-        # Get JSON data sent from the JavaScript frontend
-        user_data = request.json
-        
-        # Extract the 3 features in the exact order the model expects
-        input_data = [
-            user_data.get('purchaseCount'),
-            user_data.get('genreMatch'),
-            user_data.get('engagementScore'),
-        ]
-        
-        # CRITICAL: Convert inputs to float, raising an error if data is missing or invalid
-        input_data_converted = []
-        for x in input_data:
-            if x is None:
-                raise ValueError("Missing input data received from frontend.")
-            input_data_converted.append(float(x))
-
-        # Convert to numpy array and reshape for the model (size 1x3)
-        input_array = np.array(input_data_converted).reshape(1, -1)
-        
-        # Make the prediction
-        prediction = model.predict(input_array)[0]
-        
-        # Get probability to give a "confidence" score (XAI - Explainable AI)
-        probabilities = model.predict_proba(input_array)
-        confidence = round(np.max(probabilities) * 100, 2)
-        
-        # Determine LTV (Lifetime Value) prediction based on the status
-        if prediction == 1:
-            status = "HIGH VALUE"
-            ltv_prediction = "$100+ (Eligible)"
-        else:
-            status = "LOW VALUE"
-            ltv_prediction = "~$50 (Ineligible)"
-
-        return jsonify({
-            "status": status,
-            "prediction_value": int(prediction),
-            "ltv_prediction": ltv_prediction,
-            "confidence": f"{confidence}%"
-        })
-
-    except Exception as e:
-        # Log the error in the server console for debugging
-        print(f"Error during prediction: {e}")
-        # Return a 400 error response so the JavaScript can display a clean error message
-        return jsonify({"error": str(e), "message": "Invalid input data or server prediction error."}), 400
-
-# --- 4. RUN THE SERVER ---
 if __name__ == '__main__':
-    # Setting use_reloader=False prevents certain double-start issues in some environments
-    app.run(debug=True, port=5000, use_reloader=False)
+    socketio.run(app, debug=True, port=5000, use_reloader=False)
