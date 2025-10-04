@@ -9,40 +9,41 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
+
     <!-- Tailwind CSS (for AI component styling) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Arial', 'sans-serif'], // Keep original font if no custom one is defined
-                    },
-                    // Define colors used in the AI module for consistency
-                    colors: {
-                        'cine-primary': '#1E3C72', // Dark Blue from your CSS
-                        'cine-accent': '#FF512F', // Orange/Red gradient color from your CSS
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Arial", "sans-serif"], // Keep original font if no custom one is defined
+            },
+            // Define colors used in the AI module for consistency
+            colors: {
+              "cine-primary": "#1E3C72", // Dark Blue from your CSS
+              "cine-accent": "#FF512F", // Orange/Red gradient color from your CSS
+            },
+          },
+        },
+      };
     </script>
     <style>
-        /* Custom styles for the AI Loyalty Module */
-        .ai-card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        .high-value-ai {
-            border-left: 6px solid #10B981; /* Green color for positive result */
-        }
-        .low-value-ai {
-            border-left: 6px solid #EF4444; /* Red color for engagement required */
-        }
-        .ai-hidden {
-            display: none;
-        }
+      /* Custom styles for the AI Loyalty Module */
+      .ai-card {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+      .high-value-ai {
+        border-left: 6px solid #10b981; /* Green color for positive result */
+      }
+      .low-value-ai {
+        border-left: 6px solid #ef4444; /* Red color for engagement required */
+      }
+      .ai-hidden {
+        display: none;
+      }
     </style>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   </head>
@@ -61,85 +62,183 @@
     <main>
       <!-- AI LOYALTY MODEL SECTION (NEW) -->
       <section id="ai_loyalty" class="feature-section ai-hidden">
-          <header class="text-center mb-10">
-              <h1 class="text-4xl font-extrabold text-cine-primary mb-2">AI Loyalty Prediction</h1>
-              <p class="text-lg text-gray-500">Predictive Analytics for Audience LTV and Smart Rewards</p>
-          </header>
+        <header class="text-center mb-10">
+          <h1 class="text-4xl font-extrabold text-cine-primary mb-2">
+            AI Loyalty Prediction
+          </h1>
+          <p class="text-lg text-gray-500">
+            Predictive Analytics for Audience LTV and Smart Rewards
+          </p>
+        </header>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <!-- Input Form (Left Column) -->
-              <div class="lg:col-span-1 p-6 bg-white rounded-xl ai-card h-fit sticky top-8">
-                  <h2 class="text-xl font-bold mb-5 text-cine-primary border-b pb-2">Simulate New Viewer Data</h2>
-                  
-                  <form id="loyaltyForm" class="space-y-4">
-                      <div>
-                          <label for="purchaseCount" class="block text-sm font-medium text-gray-700">Ticket/VOD Purchase Count (1-10)</label>
-                          <input type="number" id="purchaseCount" name="purchaseCount" min="1" max="10" value="7" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                      </div>
-                      
-                      <div>
-                          <label for="genreMatch" class="block text-sm font-medium text-gray-700">Genre Preference Match (0.0 to 1.0)</label>
-                          <input type="number" id="genreMatch" name="genreMatch" step="0.01" min="0.0" max="1.0" value="0.9" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                          <p class="text-xs text-gray-400 mt-1">High number means their watch history strongly matches the film's genre.</p>
-                      </div>
-                      
-                      <div>
-                          <label for="engagementScore" class="block text-sm font-medium text-gray-700">Social Engagement Score (0-10)</label>
-                          <input type="number" id="engagementScore" name="engagementScore" min="0" max="10" value="8" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                          <p class="text-xs text-gray-400 mt-1">Based on reviews, shares, and community activity.</p>
-                      </div>
-                      
-                      <button type="submit" 
-                              class="w-full py-2 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-cine-accent hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cine-accent transition ease-in-out duration-150">
-                          <span id="buttonText">Run AI Loyalty Prediction</span>
-                          <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: inline-block;">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                      </button>
-                      <p id="apiMessage" class="mt-2 text-xs text-red-500"></p>
-                  </form>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Input Form (Left Column) -->
+          <div
+            class="lg:col-span-1 p-6 bg-white rounded-xl ai-card h-fit sticky top-8"
+          >
+            <h2 class="text-xl font-bold mb-5 text-cine-primary border-b pb-2">
+              Simulate New Viewer Data
+            </h2>
+
+            <form id="loyaltyForm" class="space-y-4">
+              <div>
+                <label
+                  for="purchaseCount"
+                  class="block text-sm font-medium text-gray-700"
+                  >Ticket/VOD Purchase Count (1-10)</label
+                >
+                <input
+                  type="number"
+                  id="purchaseCount"
+                  name="purchaseCount"
+                  min="1"
+                  max="10"
+                  value="7"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border"
+                />
               </div>
 
-              <!-- Results Panel (Right Columns) -->
-              <div class="lg:col-span-2 space-y-8">
-
-                  <!-- AI Prediction Result Card -->
-                  <div id="resultCard" class="p-6 bg-white rounded-xl ai-card high-value-ai opacity-0">
-                      <h2 class="text-2xl font-extrabold text-cine-primary mb-4 flex justify-between items-center">
-                          AI Prediction for User #<span id="userIdDisplay">1001</span>
-                          <span id="statusBadge" class="px-3 py-1 text-sm font-semibold rounded-full bg-cine-accent text-white"></span>
-                      </h2>
-                      
-                      <dl class="space-y-4">
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Predicted Loyalty Status</dt>
-                              <dd id="predictedStatus" class="font-bold text-cine-primary text-right"></dd>
-                          </div>
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Predicted Lifetime Value (LTV)</dt>
-                              <dd id="ltvPrediction" class="font-bold text-green-600 text-right"></dd>
-                          </div>
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Model Confidence</dt>
-                              <dd id="modelConfidence" class="text-gray-700 text-right"></dd>
-                          </div>
-                      </dl>
-                  </div>
-
-                  <!-- Cinechain Action/Transparency Log -->
-                  <div class="p-6 bg-white rounded-xl ai-card">
-                      <h2 class="text-xl font-bold text-cine-primary mb-4 border-b pb-2">Cinechain Transparency Log (Smart Contract Action)</h2>
-                      <div id="actionLog" class="space-y-3 text-sm text-gray-600 font-mono">
-                          <p class="text-gray-400">System Initialized. Awaiting AI prediction request...</p>
-                      </div>
-                  </div>
-
+              <div>
+                <label
+                  for="genreMatch"
+                  class="block text-sm font-medium text-gray-700"
+                  >Genre Preference Match (0.0 to 1.0)</label
+                >
+                <input
+                  type="number"
+                  id="genreMatch"
+                  name="genreMatch"
+                  step="0.01"
+                  min="0.0"
+                  max="1.0"
+                  value="0.9"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border"
+                />
+                <p class="text-xs text-gray-400 mt-1">
+                  High number means their watch history strongly matches the
+                  film's genre.
+                </p>
               </div>
+
+              <div>
+                <label
+                  for="engagementScore"
+                  class="block text-sm font-medium text-gray-700"
+                  >Social Engagement Score (0-10)</label
+                >
+                <input
+                  type="number"
+                  id="engagementScore"
+                  name="engagementScore"
+                  min="0"
+                  max="10"
+                  value="8"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border"
+                />
+                <p class="text-xs text-gray-400 mt-1">
+                  Based on reviews, shares, and community activity.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full py-2 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-cine-accent hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cine-accent transition ease-in-out duration-150"
+              >
+                <span id="buttonText">Run AI Loyalty Prediction</span>
+                <svg
+                  id="spinner"
+                  class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  style="display: inline-block"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </button>
+              <p id="apiMessage" class="mt-2 text-xs text-red-500"></p>
+            </form>
           </div>
+
+          <!-- Results Panel (Right Columns) -->
+          <div class="lg:col-span-2 space-y-8">
+            <!-- AI Prediction Result Card -->
+            <div
+              id="resultCard"
+              class="p-6 bg-white rounded-xl ai-card high-value-ai opacity-0"
+            >
+              <h2
+                class="text-2xl font-extrabold text-cine-primary mb-4 flex justify-between items-center"
+              >
+                AI Prediction for User #<span id="userIdDisplay">1001</span>
+                <span
+                  id="statusBadge"
+                  class="px-3 py-1 text-sm font-semibold rounded-full bg-cine-accent text-white"
+                ></span>
+              </h2>
+
+              <dl class="space-y-4">
+                <div class="flex justify-between border-t pt-4">
+                  <dt class="font-medium text-gray-600">
+                    Predicted Loyalty Status
+                  </dt>
+                  <dd
+                    id="predictedStatus"
+                    class="font-bold text-cine-primary text-right"
+                  ></dd>
+                </div>
+                <div class="flex justify-between border-t pt-4">
+                  <dt class="font-medium text-gray-600">
+                    Predicted Lifetime Value (LTV)
+                  </dt>
+                  <dd
+                    id="ltvPrediction"
+                    class="font-bold text-green-600 text-right"
+                  ></dd>
+                </div>
+                <div class="flex justify-between border-t pt-4">
+                  <dt class="font-medium text-gray-600">Model Confidence</dt>
+                  <dd
+                    id="modelConfidence"
+                    class="text-gray-700 text-right"
+                  ></dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- Cinechain Action/Transparency Log -->
+            <div class="p-6 bg-white rounded-xl ai-card">
+              <h2
+                class="text-xl font-bold text-cine-primary mb-4 border-b pb-2"
+              >
+                Cinechain Transparency Log (Smart Contract Action)
+              </h2>
+              <div
+                id="actionLog"
+                class="space-y-3 text-sm text-gray-600 font-mono"
+              >
+                <p class="text-gray-400">
+                  System Initialized. Awaiting AI prediction request...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Dashboard Section -->
@@ -164,9 +263,24 @@
           </div>
         </div>
         <div style="margin-top: 40px">
-          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 16px;
+            "
+          >
             <h2 style="margin: 0">Revenue Performance</h2>
-            <select id="monthSelector" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em;"></select>
+            <select
+              id="monthSelector"
+              style="
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                font-size: 1em;
+              "
+            ></select>
           </div>
           <canvas id="revenueChart" width="1000" height="400"></canvas>
         </div>
@@ -205,7 +319,9 @@
           <option value="distributor">Distributor</option>
           <option value="theater">Theater Owner</option>
         </select>
-        <div id="stakeholderReport">Producer: View earnings, movie reach, and feedback.</div>
+        <div id="stakeholderReport">
+          Producer: View earnings, movie reach, and feedback.
+        </div>
       </section>
 
       <!-- Geo-Map Distribution -->
@@ -218,10 +334,30 @@
       <section class="feature-section ai-hidden" id="ticketTrailSection">
         <h2>Ticket Trail</h2>
         <table id="ticketTrail">
-          <tr><th>Movie</th><th>Release</th><th>Sold</th><th>Status</th></tr>
-          <tr><td>Interstellar</td><td>2025-09-01</td><td>5000</td><td>Verified</td></tr>
-          <tr><td>Inception</td><td>2025-08-15</td><td>4200</td><td>Verified</td></tr>
-          <tr><td>The Dark Knight</td><td>2025-07-20</td><td>3900</td><td>Verified</td></tr>
+          <tr>
+            <th>Movie</th>
+            <th>Release</th>
+            <th>Sold</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Interstellar</td>
+            <td>2025-09-01</td>
+            <td>5000</td>
+            <td>Verified</td>
+          </tr>
+          <tr>
+            <td>Inception</td>
+            <td>2025-08-15</td>
+            <td>4200</td>
+            <td>Verified</td>
+          </tr>
+          <tr>
+            <td>The Dark Knight</td>
+            <td>2025-07-20</td>
+            <td>3900</td>
+            <td>Verified</td>
+          </tr>
         </table>
       </section>
 
@@ -259,9 +395,9 @@
         <h2>Transparency Trustboard</h2>
         <p>Verified numbers and fair distribution for all stakeholders.</p>
       </section>
-      
+
       <!-- Placeholder section removed, content moved to the new section above -->
-      
+
       <!-- Movies Section -->
       <section id="movies" class="ai-hidden">
         <h1>Movies</h1>
@@ -319,154 +455,188 @@
     </main>
 
     <script>
-        // --- AI Loyalty Model (JavaScript Logic) ---
+      // --- AI Loyalty Model (JavaScript Logic) ---
 
-        // Function to handle section visibility (since we don't have a router)
-        document.querySelectorAll('.Sidebar a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = link.getAttribute('href').substring(1);
-                document.querySelectorAll('main section').forEach(section => {
-                    section.classList.add('ai-hidden');
-                });
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.classList.remove('ai-hidden');
-                }
-            });
+      // Function to handle section visibility (since we don't have a router)
+      document.querySelectorAll(".Sidebar a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute("href").substring(1);
+          document.querySelectorAll("main section").forEach((section) => {
+            section.classList.add("ai-hidden");
+          });
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            targetSection.classList.remove("ai-hidden");
+          }
         });
-        
-        // Initial state: hide all except dashboard
-        document.querySelectorAll('main section:not(#dashboard)').forEach(section => {
-             section.classList.add('ai-hidden');
+      });
+
+      // Initial state: hide all except dashboard
+      document
+        .querySelectorAll("main section:not(#dashboard)")
+        .forEach((section) => {
+          section.classList.add("ai-hidden");
         });
-        document.getElementById('dashboard').classList.remove('ai-hidden');
+      document.getElementById("dashboard").classList.remove("ai-hidden");
 
-        // AI specific JS logic starts here
-        const form = document.getElementById('loyaltyForm');
-        const resultCard = document.getElementById('resultCard');
-        const statusBadge = document.getElementById('statusBadge');
-        const predictedStatus = document.getElementById('predictedStatus');
-        const ltvPrediction = document.getElementById('ltvPrediction');
-        const modelConfidence = document.getElementById('modelConfidence');
-        const actionLog = document.getElementById('actionLog');
-        const aiButton = document.querySelector('#loyaltyForm button[type="submit"]');
-        const buttonText = document.getElementById('buttonText');
-        const spinner = document.getElementById('spinner');
-        const apiMessage = document.getElementById('apiMessage');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        let currentUserId = 1001;
+      // AI specific JS logic starts here
+      const form = document.getElementById("loyaltyForm");
+      const resultCard = document.getElementById("resultCard");
+      const statusBadge = document.getElementById("statusBadge");
+      const predictedStatus = document.getElementById("predictedStatus");
+      const ltvPrediction = document.getElementById("ltvPrediction");
+      const modelConfidence = document.getElementById("modelConfidence");
+      const actionLog = document.getElementById("actionLog");
+      const aiButton = document.querySelector(
+        '#loyaltyForm button[type="submit"]'
+      );
+      const buttonText = document.getElementById("buttonText");
+      const spinner = document.getElementById("spinner");
+      const apiMessage = document.getElementById("apiMessage");
+      const userIdDisplay = document.getElementById("userIdDisplay");
+      let currentUserId = 1001;
 
-        // Function to update the log
-        function updateLog(message, isAction = false) {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('p');
-            logEntry.className = 'text-xs border-l-2 pl-2 ' + (isAction ? 'border-cine-accent text-cine-primary font-semibold' : 'border-gray-300 text-gray-600');
-            
-            // Note: The 'cine-accent' color in Tailwind is defined based on your CSS gradient color
-            if (isAction) {
-                logEntry.style.borderColor = '#FF512F'; // Use the main accent color for visibility
-                logEntry.style.color = '#1E3C72'; // Use the primary color for text
-                logEntry.style.fontWeight = '600';
-            } else {
-                 logEntry.style.borderColor = '#9CA3AF'; // Gray
-                 logEntry.style.color = '#4B5563'; // Grayish text
-            }
+      // Function to update the log
+      function updateLog(message, isAction = false) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement("p");
+        logEntry.className =
+          "text-xs border-l-2 pl-2 " +
+          (isAction
+            ? "border-cine-accent text-cine-primary font-semibold"
+            : "border-gray-300 text-gray-600");
 
-            logEntry.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${message}`;
-            actionLog.prepend(logEntry); // Add to the top
-            
-            // Limit log size
-            while (actionLog.children.length > 10) {
-                actionLog.removeChild(actionLog.lastChild);
-            }
+        // Note: The 'cine-accent' color in Tailwind is defined based on your CSS gradient color
+        if (isAction) {
+          logEntry.style.borderColor = "#FF512F"; // Use the main accent color for visibility
+          logEntry.style.color = "#1E3C72"; // Use the primary color for text
+          logEntry.style.fontWeight = "600";
+        } else {
+          logEntry.style.borderColor = "#9CA3AF"; // Gray
+          logEntry.style.color = "#4B5563"; // Grayish text
         }
-        
-        // Initial log message, clearing the placeholder
-        actionLog.innerHTML = '';
-        updateLog("System Initialized. Awaiting AI prediction request...", false);
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            apiMessage.textContent = '';
-            
-            // Show loading state
-            buttonText.textContent = 'Analyzing...';
-            spinner.classList.remove('hidden');
-            aiButton.disabled = true;
-            
-            const data = {
-                purchaseCount: parseFloat(document.getElementById('purchaseCount').value),
-                genreMatch: parseFloat(document.getElementById('genreMatch').value),
-                engagementScore: parseFloat(document.getElementById('engagementScore').value)
-            };
+        logEntry.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${message}`;
+        actionLog.prepend(logEntry); // Add to the top
 
-            updateLog(`User #${currentUserId} data received. Sending to AI for scoring.`, false);
+        // Limit log size
+        while (actionLog.children.length > 10) {
+          actionLog.removeChild(actionLog.lastChild);
+        }
+      }
 
-            try {
-                // IMPORTANT: This fetches data from the Python Flask server running on port 5000
-                const response = await fetch('http://127.0.0.1:5000/predict_loyalty', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+      // Initial log message, clearing the placeholder
+      actionLog.innerHTML = "";
+      updateLog("System Initialized. Awaiting AI prediction request...", false);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        apiMessage.textContent = "";
 
-                const result = await response.json();
+        // Show loading state
+        buttonText.textContent = "Analyzing...";
+        spinner.classList.remove("hidden");
+        aiButton.disabled = true;
 
-                // --- UPDATE VISUALS BASED ON AI PREDICTION ---
-                
-                // Update Card Style
-                resultCard.classList.remove('opacity-0', 'high-value-ai', 'low-value-ai');
-                resultCard.classList.add(result.prediction_value === 1 ? 'high-value-ai' : 'low-value-ai');
+        const data = {
+          purchaseCount: parseFloat(
+            document.getElementById("purchaseCount").value
+          ),
+          genreMatch: parseFloat(document.getElementById("genreMatch").value),
+          engagementScore: parseFloat(
+            document.getElementById("engagementScore").value
+          ),
+        };
 
-                // Update Badges and Text
-                currentUserId++; // Increment user ID for next simulation
-                userIdDisplay.textContent = currentUserId;
-                statusBadge.textContent = result.status;
-                
-                // Use custom colors for the badge/text
-                const isHighValue = result.prediction_value === 1;
-                statusBadge.style.backgroundColor = isHighValue ? '#10B981' : '#EF4444'; 
+        updateLog(
+          `User #${currentUserId} data received. Sending to AI for scoring.`,
+          false
+        );
 
-                predictedStatus.textContent = result.status;
-                ltvPrediction.textContent = result.ltv_prediction;
-                ltvPrediction.classList.remove('text-green-600', 'text-red-600');
-                ltvPrediction.classList.add(isHighValue ? 'text-green-600' : 'text-red-600');
-                modelConfidence.textContent = result.confidence;
-
-                // --- TRANSPARENCY LOGGING (Smart Contract Action) ---
-                if (isHighValue) {
-                    updateLog(`AI PREDICTION: ${result.status}. Executing SMART CONTRACT REWARD: ${result.ltv_prediction}.`, true);
-                } else {
-                    updateLog(`AI PREDICTION: ${result.status}. Executing MANAGEMENT ACTION: Flag for targeted engagement campaign.`, true);
-                }
-                
-            } catch (error) {
-                apiMessage.textContent = `Error connecting to AI API: ${error.message}. Make sure 'loyalty_model_api.py' is running!`;
-                updateLog(`CRITICAL ERROR: Failed to fetch AI prediction.`, false);
-            } finally {
-                // Reset loading state
-                buttonText.textContent = 'Run AI Loyalty Prediction';
-                spinner.classList.add('hidden');
-                aiButton.disabled = false;
+        try {
+          // IMPORTANT: This fetches data from the Python Flask server running on port 5000
+          const response = await fetch(
+            "http://127.0.0.1:5000/predict_loyalty",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
             }
-        });
-        
-        // This is necessary to correctly re-run the default submit when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check if the form exists before submitting (to prevent errors on other sections)
-            if (document.getElementById('loyaltyForm')) {
-                // Wait briefly before triggering the initial submission to allow the DOM to fully load
-                setTimeout(() => {
-                    document.getElementById('loyaltyForm').dispatchEvent(new Event('submit'));
-                }, 100); 
-            }
-        });
-        
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          // --- UPDATE VISUALS BASED ON AI PREDICTION ---
+
+          // Update Card Style
+          resultCard.classList.remove(
+            "opacity-0",
+            "high-value-ai",
+            "low-value-ai"
+          );
+          resultCard.classList.add(
+            result.prediction_value === 1 ? "high-value-ai" : "low-value-ai"
+          );
+
+          // Update Badges and Text
+          currentUserId++; // Increment user ID for next simulation
+          userIdDisplay.textContent = currentUserId;
+          statusBadge.textContent = result.status;
+
+          // Use custom colors for the badge/text
+          const isHighValue = result.prediction_value === 1;
+          statusBadge.style.backgroundColor = isHighValue
+            ? "#10B981"
+            : "#EF4444";
+
+          predictedStatus.textContent = result.status;
+          ltvPrediction.textContent = result.ltv_prediction;
+          ltvPrediction.classList.remove("text-green-600", "text-red-600");
+          ltvPrediction.classList.add(
+            isHighValue ? "text-green-600" : "text-red-600"
+          );
+          modelConfidence.textContent = result.confidence;
+
+          // --- TRANSPARENCY LOGGING (Smart Contract Action) ---
+          if (isHighValue) {
+            updateLog(
+              `AI PREDICTION: ${result.status}. Executing SMART CONTRACT REWARD: ${result.ltv_prediction}.`,
+              true
+            );
+          } else {
+            updateLog(
+              `AI PREDICTION: ${result.status}. Executing MANAGEMENT ACTION: Flag for targeted engagement campaign.`,
+              true
+            );
+          }
+        } catch (error) {
+          apiMessage.textContent = `Error connecting to AI API: ${error.message}. Make sure 'loyalty_model_api.py' is running!`;
+          updateLog(`CRITICAL ERROR: Failed to fetch AI prediction.`, false);
+        } finally {
+          // Reset loading state
+          buttonText.textContent = "Run AI Loyalty Prediction";
+          spinner.classList.add("hidden");
+          aiButton.disabled = false;
+        }
+      });
+
+      // This is necessary to correctly re-run the default submit when the page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        // Check if the form exists before submitting (to prevent errors on other sections)
+        if (document.getElementById("loyaltyForm")) {
+          // Wait briefly before triggering the initial submission to allow the DOM to fully load
+          setTimeout(() => {
+            document
+              .getElementById("loyaltyForm")
+              .dispatchEvent(new Event("submit"));
+          }, 100);
+        }
+      });
     </script>
   </body>
 </html>
