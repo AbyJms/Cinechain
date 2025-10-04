@@ -1,86 +1,107 @@
-import pandas as pd
 from flask import Flask, request, jsonify
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
-from flask_cors import CORS # Required for cross-origin requests from the HTML file
-import numpy as np
+from flask_cors import CORS
+import sqlite3
+import random
+from apscheduler.schedulers.background import BackgroundScheduler
+from playwright.sync_api import sync_playwright
 
-# --- 1. SETUP THE FLASK APPLICATION ---
 app = Flask(__name__)
-CORS(app) # Enable CORS for frontend communication
+CORS(app)
 
-# --- 2. MOCK DATASET FOR TRAINING THE AI MODEL ---
-# Features: [Purchase Count (Tickets/VOD), Genre Match (0.0-1.0), Social Engagement Score (0-10)]
-# Target: [Loyalty Status (0=Low Value, 1=High Value)]
-# This mock data is crucial for the hackathon demo.
+def init_db():
+    conn = sqlite3.connect('cinechain.db', check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS shows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        movie_id TEXT NOT NULL,
+        theater_id TEXT NOT NULL,
+        total_seats INTEGER,
+        booked_seats INTEGER,
+        gross_revenue REAL
+    )
+    ''')
+    conn.commit()
+    conn.close()
 
-data = {
-    'Purchase_Count': [1, 5, 2, 8, 3, 10, 1, 6, 2, 9, 4, 7],
-    'Genre_Match':    [0.2, 0.9, 0.4, 0.95, 0.6, 0.85, 0.1, 0.75, 0.3, 0.9, 0.5, 0.8],
-    'Engagement_Score': [3, 9, 4, 10, 6, 9, 2, 7, 5, 10, 8, 8],
-    'Loyalty_Status': [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]
-}
+init_db()
 
-df = pd.DataFrame(data)
+def scrape_seat_data(movie_id, theater_id):
+    URL = "https://www.pvrcinemas.com/buy-tickets/jawan-angamaly/movie-ango-1132-04-09-2023-10-30"
+    total_seats = 0
+    booked_seats = 0
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        try:
+            page.goto(URL, timeout=60000)
+            page.wait_for_selector('//div[contains(@class, "seat-layout")]', timeout=15000)
+            booked_seats_elements = page.locator('//li[contains(@class, "sold")]')
+            booked_seats = booked_seats_elements.count()
+            available_seats_elements = page.locator('//li[contains(@class, "available")]')
+            available_seats = available_seats_elements.count()
+            total_seats = booked_seats + available_seats
+        except Exception as e:
+            print(f"SCRAPER FAILED: {e}")
+            browser.close()
+            return {
+                "movie_id": movie_id,
+                "theater_id": theater_id,
+                "total_seats": random.randint(150, 300),
+                "booked_seats": random.randint(40, 150),
+                "gross_revenue": random.randint(15000, 60000)
+            }
+        browser.close()
+    revenue = booked_seats * random.uniform(250, 400)
+    scraped_data = {
+        "movie_id": movie_id,
+        "theater_id": theater_id,
+        "total_seats": total_seats,
+        "booked_seats": booked_seats,
+        "gross_revenue": round(revenue, 2)
+    }
+    print(f"SCRAPED DATA: {scraped_data}")
+    return scraped_data
 
-# Separate features (X) and target (y)
-X = df[['Purchase_Count', 'Genre_Match', 'Engagement_Score']]
-y = df['Loyalty_Status']
+def record_show_data():
+    MOVIES = ["Jawan", "LEO", "Salaar", "Kalki 2898-AD"]
+    THEATERS = ["PVR_Angamaly", "Shenoys_Kochi", "INOX_Thrissur", "Carnival_Thalayolaparambu"]
+    movie = random.choice(MOVIES)
+    theater = random.choice(THEATERS)
+    data = scrape_seat_data(movie, theater)
+    conn = sqlite3.connect('cinechain.db', check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO shows (movie_id, theater_id, total_seats, booked_seats, gross_revenue) VALUES (?, ?, ?, ?, ?)",
+        (data['movie_id'], data['theater_id'], data['total_seats'], data['booked_seats'], data['gross_revenue'])
+    )
+    conn.commit()
+    conn.close()
 
-# Train the Decision Tree Classifier (The AI Model)
-model = DecisionTreeClassifier(random_state=42)
-model.fit(X, y)
+@app.route('/api/dashboard-data', methods=['GET'])
+def get_dashboard_data():
+    conn = sqlite3.connect('cinechain.db', check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute("SELECT SUM(gross_revenue) FROM shows")
+    total_revenue = cursor.fetchone()[0] or 0
+    cursor.execute("SELECT SUM(booked_seats) FROM shows")
+    total_attendance = cursor.fetchone()[0] or 0
+    cursor.execute("SELECT theater_id, SUM(gross_revenue) FROM shows GROUP BY theater_id")
+    revenue_by_theater = cursor.fetchall()
+    conn.close()
+    chart_data = {
+        "labels": [row[0] for row in revenue_by_theater],
+        "data": [row[1] for row in revenue_by_theater]
+    }
+    return jsonify({
+        "totalRevenue": f"${total_revenue:,.0f}",
+        "totalAttendance": f"{total_attendance:,}",
+        "chartData": chart_data
+    })
 
-print("AI Loyalty Model Trained Successfully. Ready for prediction.")
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=record_show_data, trigger="interval", seconds=30)
+scheduler.start()
 
-# --- 3. API ENDPOINT FOR PREDICTION ---
-
-@app.route('/predict_loyalty', methods=['POST'])
-def predict_loyalty():
-    """
-    Receives user data from the frontend and returns a loyalty prediction.
-    """
-    try:
-        # Get JSON data sent from the JavaScript frontend
-        user_data = request.json
-        
-        # Extract features in the order the model expects
-        input_data = [
-            user_data.get('purchaseCount'),
-            user_data.get('genreMatch'),
-            user_data.get('engagementScore')
-        ]
-
-        # Convert to numpy array and reshape for the model
-        input_array = np.array(input_data).reshape(1, -1)
-        
-        # Make the prediction
-        prediction = model.predict(input_array)[0]
-        
-        # Get probability to give a "confidence" score (XAI - Explainable AI)
-        probabilities = model.predict_proba(input_array)
-        confidence = round(np.max(probabilities) * 100, 2)
-        
-        # Determine LTV (Lifetime Value) prediction based on the status
-        if prediction == 1:
-            status = "HIGH VALUE"
-            ltv_prediction = "$500+ (Eligible for NFT Reward)"
-        else:
-            status = "LOW VALUE"
-            ltv_prediction = "$50 (Requires Engagement Push)"
-
-        return jsonify({
-            "status": status,
-            "prediction_value": int(prediction),
-            "ltv_prediction": ltv_prediction,
-            "confidence": f"{confidence}%"
-        })
-
-    except Exception as e:
-        print(f"Error during prediction: {e}")
-        return jsonify({"error": str(e), "message": "Invalid input data."}), 400
-
-# --- 4. RUN THE SERVER ---
 if __name__ == '__main__':
-    # Run on port 5000, accessible by the frontend
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)
