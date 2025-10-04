@@ -12,20 +12,25 @@ CORS(app) # Enable CORS for frontend communication
 # Features: [Purchase Count (1-10), Genre Match (0.0-1.0), Social Engagement Score (0-10)]
 # Target: [Loyalty Status (0=Low Value, 1=High Value)]
 
-# Data is structured so high scores across the board predict HIGH VALUE (1).
-# We include edge cases (e.g., high engagement but low purchases) to make the model
-# consider all three features, rather than just one.
+# Training Rule enforced by this data:
+# 1. Eligibility (AND): Must have PC>=1 AND GM>=0.2 AND ES>=4
+# 2. High Value (OR): Must be Eligible AND (PC>=5 OR GM>=0.8 OR ES>=8)
+
 data = {
-    'Purchase_Count':   [1, 5, 2, 8, 3, 10, 1, 6, 2, 9, 4, 7, 5, 1, 9, 3, 10, 1],
-    'Genre_Match':      [0.2, 0.9, 0.4, 0.95, 0.6, 0.85, 0.1, 0.75, 0.3, 0.9, 0.5, 0.8, 0.35, 0.98, 0.7, 0.15, 0.9, 0.95],
-    'Engagement_Score': [3, 9, 4, 10, 6, 9, 2, 7, 5, 10, 8, 8, 9, 2, 5, 10, 1, 1],
-    # Statuses: High scores = 1 (High Value); Low scores = 0 (Low Value)
-    'Loyalty_Status': [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0] 
+    # Test Data points are designed to test the eligibility AND OR rules:
+    'Purchase_Count':   [8, 6, 2, 4, 5, 1, 4, 3, 0, 3, 1, 10, 5, 1, 4, 7, 2, 3, 9, 1],
+    'Genre_Match':      [0.9, 0.7, 0.9, 0.8, 0.4, 0.2, 0.7, 0.5, 0.9, 0.1, 0.9, 1.0, 0.3, 0.1, 0.9, 0.2, 0.9, 0.7, 0.1, 0.2],
+    'Engagement_Score': [10, 9, 5, 8, 4, 4, 7, 6, 10, 8, 3, 10, 3, 5, 3, 4, 8, 7, 4, 1],
+    
+    # Target Status based on the specific rules:
+    # 1 (HV): Meets all minimums AND hits one of the high thresholds.
+    # 0 (LV): Fails a minimum OR meets minimums but fails all high thresholds.
+    'Loyalty_Status': [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0] 
 }
 
 df = pd.DataFrame(data)
 
-# Separate features (X) and target (y). Time_Since_Last is removed.
+# Separate features (X) and target (y)
 X = df[['Purchase_Count', 'Genre_Match', 'Engagement_Score']]
 y = df['Loyalty_Status']
 
@@ -33,7 +38,7 @@ y = df['Loyalty_Status']
 model = DecisionTreeClassifier(random_state=42)
 model.fit(X, y)
 
-print("AI Loyalty Model Trained Successfully with 3 Core Features (Purchase, Genre Match, Engagement). Ready for prediction.")
+print("AI Loyalty Model Trained Successfully with custom two-stage rule logic. Ready for prediction.")
 
 # --- 3. API ENDPOINT FOR PREDICTION ---
 
@@ -51,18 +56,13 @@ def predict_loyalty():
             user_data.get('purchaseCount'),
             user_data.get('genreMatch'),
             user_data.get('engagementScore'),
-            # NOTE: timeSinceLast is deliberately NOT extracted here
         ]
         
-        # CRITICAL FIX: Ensure all inputs are valid numbers and convert them
-        # We only expect the first 3 elements (Purchase, Genre, Engagement).
+        # CRITICAL: Convert inputs to float, raising an error if data is missing or invalid
         input_data_converted = []
-        
-        # We only iterate over the first three expected inputs
-        for i in range(3):
-            x = input_data[i] 
+        for x in input_data:
             if x is None:
-                raise ValueError(f"Missing or invalid data received for feature index {i}.")
+                raise ValueError("Missing input data received from frontend.")
             input_data_converted.append(float(x))
 
         # Convert to numpy array and reshape for the model (size 1x3)
