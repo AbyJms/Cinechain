@@ -1,455 +1,32 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CineChain - AI Loyalty System</title>
+    <title>Document</title>
     <link rel="stylesheet" href="cinechain.css" />
-    
+    <script src="cinechain.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
-    <!-- Load Tailwind CSS for AI component styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Arial', 'sans-serif'],
-                    },
-                    // Define colors used in the AI module for consistency
-                    colors: {
-                        'cine-primary': '#1E3C72', // Dark Blue from your CSS
-                        'cine-accent': '#FF512F', // Orange/Red gradient color from your CSS
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* Custom styles for the AI Loyalty Module */
-        .ai-card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        .high-value-ai {
-            border-left: 6px solid #10B981; /* Green color for positive result */
-        }
-        .low-value-ai {
-            border-left: 6px solid #EF4444; /* Red color for engagement required */
-        }
-        .ai-hidden {
-            display: none;
-        }
-        /* Styles for the new dashboard section metrics */
-        .ai-dashboard-metric {
-            background: linear-gradient(145deg, #ffffff, #f0f4ff);
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(30,60,114,0.1);
-            padding: 24px;
-            flex: 1;
-            min-width: 250px;
-            text-align: center;
-        }
-        .ai-dashboard-metric h2 {
-            font-size: 1.1em;
-            color: #2a5298;
-            margin-bottom: 8px;
-        }
-        .ai-dashboard-metric p {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #10B981; 
-        }
-    </style>
-    <script>
-        // --- GLOBAL STATE ---
-        let currentUserId = 1001;
-        let highValueUsers = 0;
-        let lowValueUsers = 0;
-        const API_URL = 'http://127.0.0.1:5000/predict_loyalty';
-
-        // --- HELPER FUNCTIONS ---
-
-        function formatTimestamp() {
-            const now = new Date();
-            // Using 24-hour format for the log
-            return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} IST]`;
-        }
-
-        function appendLog(message, isPrediction = false) {
-            const logElement = document.getElementById('actionLog');
-            const newLog = document.createElement('p');
-            
-            if (isPrediction) {
-                // Add color based on status
-                newLog.innerHTML = `<span style="color: ${message.includes('HIGH VALUE') ? '#10B981' : '#EF4444'}; font-weight: bold;">${formatTimestamp()} ${message}</span>`;
-            } else {
-                newLog.textContent = `${formatTimestamp()} ${message}`;
-                newLog.style.color = '#718096'; // Gray for general messages
-            }
-            
-            logElement.prepend(newLog); // Add to the top
-        }
-
-        function updateAIBadge(status) {
-            const statusBadge = document.getElementById('statusBadge');
-            const resultCard = document.getElementById('resultCard');
-
-            statusBadge.textContent = status;
-            
-            // Update card appearance based on prediction
-            resultCard.classList.remove('high-value-ai', 'low-value-ai');
-            if (status === 'HIGH VALUE') {
-                statusBadge.classList.remove('bg-red-500');
-                statusBadge.classList.add('bg-green-500');
-                resultCard.classList.add('high-value-ai');
-            } else {
-                statusBadge.classList.remove('bg-green-500');
-                statusBadge.classList.add('bg-red-500');
-                resultCard.classList.add('low-value-ai');
-            }
-            resultCard.classList.remove('opacity-0');
-            resultCard.classList.add('opacity-100');
-        }
-
-        function updateDashboardMetrics(status) {
-            const lastAiAction = document.getElementById('lastAiAction');
-            const userId = document.getElementById('userIdDisplay').textContent;
-
-            if (status === 'HIGH VALUE') {
-                highValueUsers++;
-                document.getElementById('highValueCount').textContent = highValueUsers;
-                lastAiAction.textContent = `REWARD: Executed Smart Contract for NFT (User ${userId}).`;
-                lastAiAction.style.color = '#10B981';
-            } else {
-                lowValueUsers++;
-                document.getElementById('lowValueCount').textContent = lowValueUsers;
-                lastAiAction.textContent = `FLAG: User sent to targeted engagement campaign (User ${userId}).`;
-                lastAiAction.style.color = '#EF4444';
-            }
-        }
-
-        // --- MAIN PREDICTION LOGIC ---
-        async function runLoyaltyPrediction(event) {
-            event.preventDefault(); // Stop the form from refreshing the page
-
-            const form = document.getElementById('loyaltyForm');
-            const spinner = document.getElementById('spinner');
-            const buttonText = document.getElementById('buttonText');
-            const apiMessage = document.getElementById('apiMessage');
-            const aiButton = document.querySelector('#loyaltyForm button[type="submit"]');
-
-            // 1. Loading State
-            buttonText.textContent = 'Analyzing...';
-            spinner.classList.remove('hidden');
-            aiButton.disabled = true;
-
-            // 2. Prepare Data (CRITICAL: Extracting only 3 features)
-            const purchaseCount = parseFloat(form.purchaseCount.value);
-            const genreMatch = parseFloat(form.genreMatch.value);
-            const engagementScore = parseFloat(form.engagementScore.value);
-            // Time Since Last Purchase is removed here
-            
-            // Critical check for valid inputs before sending
-            if (isNaN(purchaseCount) || isNaN(genreMatch) || isNaN(engagementScore)) {
-                apiMessage.textContent = 'Error: Please enter valid numeric values for all fields.';
-                buttonText.textContent = 'Run AI Loyalty Prediction';
-                spinner.classList.add('hidden');
-                aiButton.disabled = false;
-                return;
-            }
-
-            // Update user ID and log initial message
-            currentUserId++;
-            document.getElementById('userIdDisplay').textContent = currentUserId;
-            appendLog(`User #${currentUserId} data received. Sending 3 features to AI for scoring...`);
-
-
-            try {
-                // 3. API Call
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        // THIS IS THE CORRECT 3-FEATURE PAYLOAD
-                        purchaseCount: purchaseCount,
-                        genreMatch: genreMatch,
-                        engagementScore: engagementScore,
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    // 4. Update Results
-                    document.getElementById('predictedStatus').textContent = result.status;
-                    document.getElementById('ltvPrediction').textContent = result.ltv_prediction;
-                    document.getElementById('modelConfidence').textContent = result.confidence;
-
-                    updateAIBadge(result.status);
-                    updateDashboardMetrics(result.status);
-                    
-                    const actionMessage = `AI PREDICTION: ${result.status}. Executing SMART CONTRACT REWARD: ${result.ltv_prediction}. Confidence: ${result.confidence}`;
-                    appendLog(actionMessage, true);
-
-                } else {
-                    // API returned 400 or 500 error (e.g., ValueError from Python)
-                    apiMessage.textContent = `API Error: ${result.message || 'Server error occurred.'}`;
-                    appendLog(`API Error for User #${currentUserId}: ${result.message || 'Unknown Server Error'}`, true);
-                }
-
-            } catch (error) {
-                // Network error (e.g., Python server is down)
-                console.error("Network or Fetch Error:", error);
-                apiMessage.textContent = 'CRITICAL ERROR: Could not connect to the Python AI Server (http://127.0.0.1:5000). Please ensure the server is running.';
-            } finally {
-                // Reset Loading State
-                buttonText.textContent = 'Run AI Loyalty Prediction';
-                spinner.classList.add('hidden');
-                aiButton.disabled = false;
-            }
-        }
-        
-        // --- GENERAL DASHBOARD SETUP ---
-        document.addEventListener('DOMContentLoaded', function() {
-            const items = document.querySelectorAll('.Sidebar li');
-            const sections = document.querySelectorAll('main section');
-            const loyaltyForm = document.getElementById('loyaltyForm');
-            
-            function showSection(id) {
-                sections.forEach(section => {
-                    section.classList.add('ai-hidden');
-                    if (section.id === id) {
-                        section.classList.remove('ai-hidden');
-                    }
-                });
-            }
-
-            // Sidebar navigation logic
-            items.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    items.forEach(i => i.classList.remove('selected'));
-                    this.classList.add('selected');
-                    const targetId = this.querySelector('a').getAttribute('href').substring(1);
-                    showSection(targetId);
-                });
-            });
-
-            // Initial section display (Dashboard)
-            showSection('dashboard'); 
-            document.querySelector('.Sidebar li:first-child').classList.add('selected');
-
-            // Attach AI prediction handler
-            if (loyaltyForm) {
-                loyaltyForm.addEventListener('submit', runLoyaltyPrediction);
-            }
-
-
-            // Mock Data Generator for Dashboard Metrics (from original cinechain.js)
-            function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-
-            function updateMetrics() {
-                document.getElementById('totalRevenue').textContent = '$' + getRandomInt(50000, 200000).toLocaleString();
-                document.getElementById('totalAttendance').textContent = getRandomInt(1000, 10000).toLocaleString();
-                document.getElementById('activeChannels').textContent = getRandomInt(5, 100);
-                document.getElementById('moviesDistributing').textContent = getRandomInt(10, 50);
-            }
-            updateMetrics();
-            setInterval(updateMetrics, 5000);
-
-
-            // Chart Setup (from original cinechain.js)
-            const monthSelector = document.getElementById('monthSelector');
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            for (let i = 0; i < 12; i++) {
-                let date = new Date(currentYear, currentMonth - i, 1);
-                let value = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
-                let text = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-                let option = document.createElement('option');
-                option.value = value;
-                option.textContent = text;
-                if (i === 0) option.selected = true;
-                monthSelector.appendChild(option);
-            }
-
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            const days = Array.from({length: 30}, (_, i) => `Day ${i+1}`);
-            const revenueData = Array.from({length: 30}, () => getRandomInt(1000, 10000));
-
-            const revenueChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: 'Revenue',
-                        data: revenueData,
-                        backgroundColor: days.map(() => 'rgba(46, 83, 201, 0.7)'),
-                        borderColor: days.map(() => '#ff512f'),
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        hoverBackgroundColor: 'rgba(221,36,118,0.7)'
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    plugins: {
-                        legend: { display: true },
-                        title: {
-                            display: true,
-                            text: 'Monthly Revenue Trend',
-                            font: { size: 24 }
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: '#2a5298',
-                            titleColor: '#fff',
-                            bodyColor: '#fff'
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: { display: true, text: 'Day of Month', font: { size: 18 } },
-                            grid: { color: '#cfdef3' }
-                        },
-                        y: {
-                            display: true,
-                            title: { display: true, text: 'Revenue ($)', font: { size: 18 } },
-                            grid: { color: '#cfdef3' }
-                        }
-                    }
-                }
-            });
-
-            monthSelector.addEventListener('change', function() {
-                revenueChart.data.datasets[0].data = Array.from({length: 30}, () => getRandomInt(1000, 10000));
-                revenueChart.update();
-            });
-
-            // Auto-run AI prediction on initial load
-            if (loyaltyForm) {
-                setTimeout(() => {
-                    // Only try to submit if the API message hasn't indicated an error yet
-                    if (document.getElementById('apiMessage').textContent.includes('CRITICAL ERROR') === false) {
-                        loyaltyForm.dispatchEvent(new Event('submit', { bubbles: true }));
-                    }
-                }, 500); 
-            }
-        });
-    </script>
   </head>
+
   <body>
     <nav class="Sidebar">
       <ul>
-        <h1 style="margin-left: 20px">CineChain</h1>
-        <li class="selected"><a href="#dashboard">Dashboard</a></li>
-        <li><a href="#movies">Movies</a></li>
-        <li><a href="#platforms">Platforms</a></li>
-        <li><a href="#stakeholderSpotlight">Stakeholders</a></li>
-        <!-- Link to the new AI section -->
-        <li><a href="#ai_loyalty">AI Loyalty Model</a></li>
+        <li class="selected">Dashboard</li>
+        <li>Movies</li>
+        <li>Platforms</li>
+        <li>Stakeholders</li>
       </ul>
     </nav>
-    <main>
-      <!-- AI LOYALTY MODEL SECTION (NEW) -->
-      <section id="ai_loyalty" class="feature-section ai-hidden">
-          <header class="text-center mb-10">
-              <h1 class="text-4xl font-extrabold text-cine-primary mb-2">AI Loyalty Prediction</h1>
-              <p class="text-lg text-gray-500">Predictive Analytics for Audience LTV and Smart Rewards</p>
-          </header>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <!-- Input Form (Left Column) -->
-              <div class="lg:col-span-1 p-6 bg-white rounded-xl ai-card h-fit sticky top-8">
-                  <h2 class="text-xl font-bold mb-5 text-cine-primary border-b pb-2">Simulate New Viewer Data (3 Core Features)</h2>
-                  
-                  <form id="loyaltyForm" class="space-y-4">
-                      <div>
-                          <label for="purchaseCount" class="block text-sm font-medium text-gray-700">Ticket/VOD Purchase Count (1-10)</label>
-                          <input type="number" id="purchaseCount" name="purchaseCount" min="1" max="10" value="7" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                      </div>
-                      
-                      <div>
-                          <label for="genreMatch" class="block text-sm font-medium text-gray-700">Genre Preference Match (0.0 to 1.0)</label>
-                          <input type="number" id="genreMatch" name="genreMatch" step="0.01" min="0.0" max="1.0" value="0.9" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                          <p class="text-xs text-gray-400 mt-1">High number means their watch history strongly matches the film's genre.</p>
-                      </div>
-                      
-                      <div>
-                          <label for="engagementScore" class="block text-sm font-medium text-gray-700">Social Engagement Score (0-10)</label>
-                          <input type="number" id="engagementScore" name="engagementScore" min="0" max="10" value="8" required
-                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cine-accent focus:ring-cine-accent p-2 border">
-                          <p class="text-xs text-gray-400 mt-1">Based on reviews, shares, and community activity.</p>
-                      </div>
-
-                       
-                      <button type="submit" 
-                              class="w-full py-2 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-cine-accent hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cine-accent transition ease-in-out duration-150">
-                          <span id="buttonText">Run AI Loyalty Prediction</span>
-                          <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: inline-block;">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                      </button>
-                      <p id="apiMessage" class="mt-2 text-xs text-red-500"></p>
-                  </form>
-              </div>
-
-              <!-- Results Panel (Right Columns) -->
-              <div class="lg:col-span-2 space-y-8">
-
-                  <!-- AI Prediction Result Card -->
-                  <div id="resultCard" class="p-6 bg-white rounded-xl ai-card high-value-ai opacity-0">
-                      <h2 class="text-2xl font-extrabold text-cine-primary mb-4 flex justify-between items-center">
-                          AI Prediction for User #<span id="userIdDisplay">1001</span>
-                          <span id="statusBadge" class="px-3 py-1 text-sm font-semibold rounded-full bg-cine-accent text-white"></span>
-                      </h2>
-                      
-                      <dl class="space-y-4">
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Predicted Loyalty Status</dt>
-                              <dd id="predictedStatus" class="font-bold text-cine-primary text-right"></dd>
-                          </div>
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Predicted Lifetime Value (LTV)</dt>
-                              <dd id="ltvPrediction" class="font-bold text-green-600 text-right"></dd>
-                          </div>
-                          <div class="flex justify-between border-t pt-4">
-                              <dt class="font-medium text-gray-600">Model Confidence</dt>
-                              <dd id="modelConfidence" class="text-gray-700 text-right"></dd>
-                          </div>
-                      </dl>
-                  </div>
-
-                  <!-- Cinechain Action/Transparency Log -->
-                  <div class="p-6 bg-white rounded-xl ai-card">
-                      <h2 class="text-xl font-bold text-cine-primary mb-4 border-b pb-2">Cinechain Transparency Log (Smart Contract Action)</h2>
-                      <div id="actionLog" class="space-y-3 text-sm text-gray-600 font-mono">
-                          <p class="text-gray-400">System Initialized. Awaiting AI prediction request...</p>
-                      </div>
-                  </div>
-
-              </div>
-          </div>
-      </section>
-
-      <!-- Dashboard Section -->
+    <main style="margin-left: 320px; padding: 32px">
       <section id="dashboard">
         <h1>Dashboard</h1>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <div style="display: flex; gap: 32px; flex-wrap: wrap">
           <div class="metric">
-            <h2>Movies Distributing</h2>
-            <p id="moviesDistributing">0</p>
+            <h2>Total Revenue</h2>
+            <p id="totalRevenue">$50</p>
           </div>
           <div class="metric">
             <h2>Total Attendance</h2>
@@ -460,97 +37,35 @@
             <p id="activeChannels">0</p>
           </div>
           <div class="metric">
-            <h2>Total Revenue</h2>
-            <p id="totalRevenue">$50</p>
+            <h2>Movies Distributing</h2>
+            <p id="moviesDistributing">0</p>
           </div>
         </div>
 
-        <!-- AI DASHBOARD INSIGHTS -->
         <div style="margin-top: 40px">
-            <h2 style="margin-bottom: 16px; color: #1e3c72;">AI Audience Insights (Live from Model)</h2>
-            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                <div class="ai-dashboard-metric">
-                    <h2>High Value Users Detected</h2>
-                    <p id="highValueCount" style="color: #10B981;">0</p>
-                </div>
-                <div class="ai-dashboard-metric">
-                    <h2>Low Value Users Flagged</h2>
-                    <p id="lowValueCount" style="color: #EF4444;">0</p>
-                </div>
-                <div class="ai-dashboard-metric" style="flex-grow: 2; text-align: left;">
-                    <h2 style="text-align: center;">Last Smart Contract Action</h2>
-                    <p id="lastAiAction" style="font-size: 1.1em; color: #2a5298; margin: 0; text-align: center;">Awaiting first prediction...</p>
-                </div>
-            </div>
-        </div>
-        <!-- END AI DASHBOARD INSIGHTS -->
-
-        <div style="margin-top: 40px">
-          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 16px;
+            "
+          >
             <h2 style="margin: 0">Revenue Performance</h2>
-            <select id="monthSelector" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em;"></select>
+            <select
+              id="monthSelector"
+              style="
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                font-size: 1em;
+              "
+            ></select>
           </div>
           <canvas id="revenueChart" width="1000" height="400"></canvas>
         </div>
       </section>
-
-      <!-- All other static sections for demonstration -->
-      <section id="movies" class="feature-section ai-hidden">
-        <h1>Movies</h1>
-        <div class="card movie-card">
-          <div class="movie-info">
-            <h3>Top Movie</h3>
-            <p>Movie: <strong>Interstellar</strong></p>
-            <p>Revenue: $150,000</p>
-          </div>
-          <img src="images/interstellar.webp" alt="Interstellar Poster" />
-        </div>
-        <div class="card movie-card">
-          <div class="movie-info">
-            <h3>Second Movie</h3>
-            <p>Movie: <strong>Inception</strong></p>
-            <p>Revenue: $120,000</p>
-          </div>
-          <img src="images/inception.webp" alt="Inception Poster" />
-        </div>
-        <div class="card movie-card">
-          <div class="movie-info">
-            <h3>Third Movie</h3>
-            <p>Movie: <strong>The Dark Knight</strong></p>
-            <p>Revenue: $110,000</p>
-          </div>
-          <img src="images/darkknight.webp" alt="The Dark Knight Poster" />
-        </div>
-      </section>
-
-      <!-- Platforms Section -->
-      <section id="platforms" class="feature-section ai-hidden">
-        <h1>Platforms</h1>
-        <div class="card">
-          <h3>Top Platform</h3>
-          <p>Platform: <strong>Netflix</strong></p>
-          <p>Movies Hosted: 150</p>
-          <p>Total Views: 1,200,000</p>
-        </div>
-        <div class="card">
-          <h3>Second Platform</h3>
-          <p>Platform: <strong>Amazon Prime</strong></p>
-          <p>Movies Hosted: 120</p>
-          <p>Total Views: 950,000</p>
-        </div>
-        <div class="card">
-          <h3>Third Platform</h3>
-          <p>Platform: <strong>Disney+</strong></p>
-          <p>Movies Hosted: 100</p>
-          <p>Total Views: 800,000</p>
-        </div>
-      </section>
-      
-      <!-- Placeholder Sections to make sure all sidebar links work -->
-      <section id="stakeholderSpotlight" class="feature-section ai-hidden">
-        <h2>Stakeholder Spotlight</h2>
-        <p>Detail on transparent revenue splits and performance reports for Producers, Distributors, and Theaters would go here.</p>
-      </section>
     </main>
-  </body>
+</body>
+
 </html>
