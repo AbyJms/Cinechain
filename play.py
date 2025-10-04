@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright
 import time
 
 # Replace with your PVR cinema page URL
-URL = "https://in.bookmyshow.com/cinemas/kochi/pvr-lulu-kochi/buytickets/PVLC/20251004"
+URL = "https://in.bookmyshow.com/cinemas/kochi/vanitha-cineplex-rgb-laser-4k-3d-atmos-edappally/buytickets/VMHE/20251005"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)  # visible browser
@@ -38,10 +38,14 @@ with sync_playwright() as p:
     bleh.click()
     print("Clicked Select Seats")
 
-    time.sleep(20)  # extra wait for rendering
+    time.sleep(5)  # extra wait for rendering
 
     # --- Take screenshot of seat map ---
-    page.screenshot(path="seatmap.png")
+    
+    page.screenshot(
+    path="seatmap.png",
+    clip={"x": 300, "y": 180, "width": 800, "height": 1200}
+    )
     print("Screenshot saved: seatmap.png")
 
 import cv2
@@ -55,7 +59,7 @@ hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 # --- Define green color range (tweak if needed) ---
 # Typical green HSV range
-lower_green = np.array([15, 50, 50])
+lower_green = np.array([35, 0, 0])
 upper_green = np.array([90, 255, 255])
 
 # --- Threshold the green areas ---
@@ -82,8 +86,5 @@ cv2.imshow("Detected Green Boxes", img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-
-    
-    
 
 browser.close()
