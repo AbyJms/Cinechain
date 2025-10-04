@@ -26,49 +26,57 @@ def init_db():
 
 init_db()
 
-def scrape_seat_data(movie_id, theater_id):
-    URL = "https://www.pvrcinemas.com/buy-tickets/jawan-angamaly/movie-ango-1132-04-09-2023-10-30"
-    total_seats = 0
-    booked_seats = 0
+def scrape_bms_seat_data():
+    URL = "https://in.bookmyshow.com/buytickets/kalki-2898-ad-kochi/movie-koch-ET00352941-MT/20251004"
+    
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         try:
-            page.goto(URL, timeout=60000)
-            page.wait_for_selector('//div[contains(@class, "seat-layout")]', timeout=15000)
-            booked_seats_elements = page.locator('//li[contains(@class, "sold")]')
+            page.goto(URL, timeout=90000)
+            
+            try:
+                page.locator("#btn-accept").click(timeout=10000)
+            except Exception:
+                print("T&C pop-up not found or already accepted.")
+
+            page.wait_for_selector("#seat-layout", timeout=20000)
+            
+            booked_seats_elements = page.locator("a._sold")
             booked_seats = booked_seats_elements.count()
-            available_seats_elements = page.locator('//li[contains(@class, "available")]')
+            
+            available_seats_elements = page.locator("a._available")
             available_seats = available_seats_elements.count()
+            
             total_seats = booked_seats + available_seats
+            
+            avg_ticket_price = 350
+            revenue = booked_seats * avg_ticket_price
+            
+            scraped_data = {
+                "movie_id": "Kalki 2898 AD",
+                "theater_id": "PVR Lulu, Kochi",
+                "total_seats": total_seats,
+                "booked_seats": booked_seats,
+                "gross_revenue": revenue
+            }
+            
+            print(f"SCRAPE SUCCESS: {scraped_data}")
+            browser.close()
+            return scraped_data
+
         except Exception as e:
             print(f"SCRAPER FAILED: {e}")
             browser.close()
-            return {
-                "movie_id": movie_id,
-                "theater_id": theater_id,
-                "total_seats": random.randint(150, 300),
-                "booked_seats": random.randint(40, 150),
-                "gross_revenue": random.randint(15000, 60000)
-            }
-        browser.close()
-    revenue = booked_seats * random.uniform(250, 400)
-    scraped_data = {
-        "movie_id": movie_id,
-        "theater_id": theater_id,
-        "total_seats": total_seats,
-        "booked_seats": booked_seats,
-        "gross_revenue": round(revenue, 2)
-    }
-    print(f"SCRAPED DATA: {scraped_data}")
-    return scraped_data
+            return None
 
 def record_show_data():
-    MOVIES = ["Jawan", "LEO", "Salaar", "Kalki 2898-AD"]
-    THEATERS = ["PVR_Angamaly", "Shenoys_Kochi", "INOX_Thrissur", "Carnival_Thalayolaparambu"]
-    movie = random.choice(MOVIES)
-    theater = random.choice(THEATERS)
-    data = scrape_seat_data(movie, theater)
+    data = scrape_bms_seat_data()
+    
+    if data is None:
+        print("Skipping database entry due to scrape failure.")
+        return
+        
     conn = sqlite3.connect('cinechain.db', check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute(
@@ -100,7 +108,7 @@ def get_dashboard_data():
     })
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=record_show_data, trigger="interval", seconds=30)
+scheduler.add_job(func=record_show_data, trigger="interval", seconds=300)
 scheduler.start()
 
 if __name__ == '__main__':

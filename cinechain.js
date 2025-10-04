@@ -1,25 +1,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    const sidebarItems = document.querySelectorAll('.Sidebar li');
-    sidebarItems.forEach(item => {
-        item.addEventListener('click', function() {
-            sidebarItems.forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
+    const sidebarLinks = document.querySelectorAll('.Sidebar a');
+    const mainSections = document.querySelectorAll('main > section');
+    const sidebarListItems = document.querySelectorAll('.Sidebar li');
+
+    function showSection(targetId) {
+        mainSections.forEach(section => {
+            if (section.id === targetId) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+    }
+
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            showSection(targetId);
+            
+            sidebarListItems.forEach(li => li.classList.remove('selected'));
+            this.parentElement.classList.add('selected');
         });
     });
 
-    const stakeholderSelector = document.getElementById('stakeholderSelector');
-    if (stakeholderSelector) {
-        const stakeholderReport = document.getElementById('stakeholderReport');
-        stakeholderSelector.addEventListener('change', function() {
-            const role = this.value;
-            let report = '';
-            if (role === 'producer') report = 'Producer: View earnings, movie reach, and feedback.';
-            if (role === 'distributor') report = 'Distributor: See channel performance and compliance.';
-            if (role === 'theater') report = 'Theater Owner: Analyze ticket sales and audience demographics.';
-            stakeholderReport.textContent = report;
-        });
-    }
+    showSection('dashboard');
 
     const ctx = document.getElementById('revenueChart').getContext('2d');
     const revenueChart = new Chart(ctx, {
@@ -53,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     async function updateDashboard() {
         try {
-            const response = await fetch('http://1227.0.0.1:5000/api/dashboard-data');
+            const response = await fetch('http://127.0.0.1:5000/api/dashboard-data');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             const data = await response.json();
