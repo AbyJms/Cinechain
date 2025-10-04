@@ -78,10 +78,10 @@ def predict_loyalty():
         # Determine LTV (Lifetime Value) prediction based on the status
         if prediction == 1:
             status = "HIGH VALUE"
-            ltv_prediction = "$500+ (Eligible for NFT Reward)"
+            ltv_prediction = "$100+ (Eligible)"
         else:
             status = "LOW VALUE"
-            ltv_prediction = "$50 (Requires Engagement Push)"
+            ltv_prediction = "~$50 (Ineligible)"
 
         return jsonify({
             "status": status,
