@@ -24,24 +24,40 @@ if not os.path.exists(CSV_FILE):
         writer.writerow(["Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue"])
 
 # --- Green seat detection ---
-def analyze_seats(image_path):
+def analyze_seats(image_path, show_preview=True):
+    """Detect green seats in screenshot and optionally show preview."""
     img = cv2.imread(image_path)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+    # Green range
     lower_green = np.array([35, 0, 0])
     upper_green = np.array([90, 250, 250])
 
+    # Mask and cleanup
     mask = cv2.inRange(hsv, lower_green, upper_green)
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
+    # Find contours
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     green_count = len(contours)
+
+    # Draw detected seats
+    vis = img.copy()
+    cv2.drawContours(vis, contours, -1, (0, 255, 0), 2)
+
+    if show_preview:
+        cv2.imshow("Detected Green Seats", vis)
+        cv2.imshow("Mask", mask)
+        print(f"🟩 Detected {green_count} green seats")
+        cv2.waitKey(1000)  # show for 1 second
+        cv2.destroyAllWindows()
 
     ac = int(green_count + (green_count / 2))
     tc = 300 - ac
     return tc
+
 
 
 # --- Main Scraper ---
@@ -50,7 +66,7 @@ with sync_playwright() as p:
 
     for theatre_url in URLS:
         theatre_name = theatre_url.split("/cinemas/kochi/")[1].split("/buytickets")[0].replace("-", " ").title()
-        print(f"\n🎬 Processing: {theatre_name}")
+        print(f"\nProcessing: {theatre_name}")
 
         page = browser.new_page()
         page.goto(theatre_url)
@@ -63,7 +79,7 @@ with sync_playwright() as p:
             first_showtime_btn.click()
             time.sleep(2)
         except Exception as e:
-            print(f"⚠️ Couldn't click showtime: {e}")
+            print(f"Couldn't click showtime: {e}")
             page.close()
             continue
 
@@ -84,7 +100,7 @@ with sync_playwright() as p:
             page.locator("div.sc-zgl7vj-7.kdBUB").click()
             time.sleep(3)
         except:
-            print("❌ Couldn't reach seat page")
+            print("Couldn't reach seat page")
             page.close()
             continue
 
@@ -119,9 +135,9 @@ with sync_playwright() as p:
             writer = csv.writer(f)
             writer.writerow([theatre_name, movie_name, green_count, ticket_price, revenue])
 
-        print(f"✅ {movie_name} | {green_count} seats | ₹{ticket_price} | 💰 ₹{revenue}")
+        print(f"{movie_name} | {green_count} seats | ₹{ticket_price} | ₹{revenue}")
         page.close()
 
     browser.close()
 
-print(f"\n📁 Data saved to {CSV_FILE}")
+print(f"\nData saved to {CSV_FILE}")
