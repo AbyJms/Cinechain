@@ -64,6 +64,8 @@ def analyze_seats(image_path, show_preview=True):
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
 
+    i = 0
+    price = [220, 300, 180]  # Fallback prices if extraction fails
     for theatre_url in URLS:
         theatre_name = theatre_url.split("/cinemas/kochi/")[1].split("/buytickets")[0].replace("-", " ").title()
         print(f"\nProcessing: {theatre_name}")
@@ -123,10 +125,13 @@ with sync_playwright() as p:
 
         # --- Extract ticket price ---
         try:
+            page.wait_for_selector("div.sc-1atac75-6.dnVSWP", timeout=5000)
             price_text = page.locator("div.sc-1atac75-6.dnVSWP").first.inner_text()
             ticket_price = int(''.join(filter(str.isdigit, price_text)))
-        except:
-            ticket_price = 200  # fallback
+        except Exception as e:
+            print("Error fetching price:", e)
+            ticket_price = price[i]  # fallback
+            i += 1
 
         revenue = green_count * ticket_price
 
