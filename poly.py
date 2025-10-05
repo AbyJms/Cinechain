@@ -19,7 +19,7 @@ CSV_FILE = "bms_seatdata.csv"
 
 # --- Initialize CSV ---
 if not os.path.exists(CSV_FILE):
-    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue"])
 
