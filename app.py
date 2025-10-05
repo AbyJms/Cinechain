@@ -24,7 +24,6 @@ def get_csv():
 
 @app.route('/api/dashboard-data')
 def get_dashboard_data():
-    """Read CSV and return summarized data"""
     total_movies = set()
     total_attendance = 0
     total_revenue = 0
@@ -48,6 +47,25 @@ def get_dashboard_data():
         "total_attendance": total_attendance,
         "total_revenue": total_revenue
     })
+
+@app.route('/api/movies-data')
+def get_movies_data():
+    if not os.path.exists(CSV_FILE):
+        return jsonify([])
+
+    data = []
+    with open(CSV_FILE, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            data.append({
+                "theatre": row["Theatre"],
+                "movie": row["Movie Name"],
+                "seats": row["Green Seats"],
+                "price": row["Ticket Price"],
+                "revenue": row["Revenue"]
+            })
+
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(debug=True)
