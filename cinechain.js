@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('moviesDistributing').textContent = data.movies_distributing;
             document.getElementById('totalAttendance').textContent = data.total_attendance;
-            document.getElementById('totalRevenue').textContent = "$" + data.total_revenue.toLocaleString();
+            document.getElementById('totalRevenue').textContent = "₹" + data.total_revenue.toLocaleString();
 
         } catch (err) {
             console.error('Error loading dashboard data:', err);
