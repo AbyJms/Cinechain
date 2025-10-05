@@ -5,15 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CineChain</title>
     <link rel="stylesheet" href="cinechain.css" />
-    <script src="cinechain.js" defer></script>
-<<<<<<< HEAD
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="ai.js"></script> 
-    <script src="cinechain.js" defer></script>
-=======
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
->>>>>>> 980f2fd04e6bc63514c79d6eb5870701b7e444e7
+    <script src="cinechain.js" defer></script>
   </head>
   <body>
     <nav class="Navbar">
@@ -28,7 +23,7 @@
     </nav>
 
     <main>
-      <!-- Dashboard Section -->
+      <!-- Dashboard -->
       <section id="dashboard" class="content-section active">
         <div class="header">
           <h1>Dashboard</h1>
@@ -59,44 +54,30 @@
           </div>
         </div>
 
+        <!-- Chart Section -->
         <div class="revenue-performance-container">
           <div class="performance-header">
             <div class="title-icon">
                 <i class="fas fa-chart-line"></i>
-                <h2>Revenue Performance</h2>
+                <h2 id="chart-title">Loading Revenue Trend...</h2>
             </div>
-            <select id="monthSelector">
-                <option value="this-month">This Month</option>
+            <select id="theater-select" disabled>
+                <option value="PVR">PVR</option>
+                <option value="VANITHA">VANITHA</option>
+                <option value="FOUR STAR">FOUR STAR</option>
             </select>
           </div>
-          <div class="no-data">
-              <i class="fas fa-chart-line no-data-icon"></i>
-              <p>No revenue data available yet</p>
-              <p class="subtitle">Start distributing movies to see performance metrics</p>
-          </div>
-          <div class="made-in-bolt">
-            Made in Bolt
+          <div class="w-full h-128" style="height: 400px;">
+            <canvas id="revenueLineChart"></canvas>
           </div>
         </div>
       </section>
 
-      <!-- Movies Section -->
+      <!-- Movies -->
       <section id="movies" class="content-section">
         <h1>Movies</h1>
         <div id="movies-container"></div>
       </section>
-
     </main>
   </body>
-<<<<<<< HEAD
-<<<<<<< HEAD
 </html>
-
-
-<!---->
-=======
-</html>
->>>>>>> 980f2fd04e6bc63514c79d6eb5870701b7e444e7
-=======
-</html>
->>>>>>> 6b6a0791f319a6492f3e0fe444b6730e51420dde

@@ -40,7 +40,8 @@ def get_dashboard_data():
         for row in reader:
             total_movies.add(row["Movie Name"])
             total_attendance += int(row["Green Seats"])
-            total_revenue += int(row["Revenue"])
+            rev = row["Revenue"].replace('₹','').replace(',','')
+            total_revenue += int(rev)
 
     return jsonify({
         "movies_distributing": len(total_movies),
@@ -59,7 +60,7 @@ def get_movies_data():
         for row in reader:
             key = (row["Theatre"], row["Movie Name"])
             seats = int(row["Green Seats"])
-            revenue = int(row["Revenue"])
+            revenue = int(row["Revenue"].replace('₹','').replace(',',''))
             price = int(row["Ticket Price"])
 
             if key in combined:
