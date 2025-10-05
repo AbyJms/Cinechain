@@ -14,7 +14,7 @@ URLS = [
 ]
 
 CSV_FILE = "bms_seatdata.csv"
-INTERVAL_HOURS = 3  # Run every 3 hours
+INTERVAL_HOURS = 2.5  # Run every 2.5 hours
 
 # --- Initialize CSV ---
 if not os.path.exists(CSV_FILE):
@@ -146,7 +146,7 @@ def run_scraper():
 
         browser.close()
 
-# --- Infinite Loop (every 3 hours) ---
+# --- Infinite Loop (every 2.5 hours) ---
 while True:
     print(f"\n=== Scraping started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===")
     try:
@@ -154,4 +154,4 @@ while True:
     except Exception as e:
         print(f"Error during scraping: {e}")
     print(f"Sleeping for {INTERVAL_HOURS} hours...\n")
-    time.sleep(INTERVAL_HOURS * 3600)
+    time.sleep(INTERVAL_HOURS * 3)
