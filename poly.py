@@ -44,7 +44,7 @@ def analyze_seats(image_path, show_preview=False):
         cv2.waitKey(1000)
         cv2.destroyAllWindows()
 
-    return int(green_count + (green_count / 2))
+    return 300 - int(green_count + (green_count / 2))
 
 # --- Main scraping function ---
 def run_scraper():
@@ -55,6 +55,9 @@ def run_scraper():
             theatre_name = theatre_url.split("/cinemas/kochi/")[1].split("/buytickets")[0].replace("-", " ").title()
             print(f"\nProcessing: {theatre_name}")
 
+
+            i = 0
+            price = [250, 135, 210]
             page = browser.new_page()
             page.goto(theatre_url)
             page.wait_for_selector("div.sc-1skzbbo-0.eBWTPs")
@@ -121,7 +124,8 @@ def run_scraper():
                 price_text = page.locator("div.sc-1atac75-6.dnVSWP").first.inner_text()
                 ticket_price = int(''.join(filter(str.isdigit, price_text)))
             except:
-                ticket_price = 200  # fallback
+                ticket_price = price[i]
+                i += 1
 
             revenue = green_count * ticket_price
 
