@@ -27,12 +27,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Fetch live data from backend API ---
     async function loadDashboardData() {
         try {
-            const res = await fetch('/api/dashboard-data');
+            // 👇 Added timestamp to bypass browser caching
+            const res = await fetch('/api/dashboard-data?_=' + new Date().getTime(), {
+                cache: 'no-store'
+            });
             const data = await res.json();
+
+            console.log("Fetched new data:", data); // 👈 debug log to confirm refresh
 
             document.getElementById('moviesDistributing').textContent = data.movies_distributing;
             document.getElementById('totalAttendance').textContent = data.total_attendance;
-            document.getElementById('totalRevenue').textContent = "$" + data.total_revenue.toLocaleString();
+            document.getElementById("totalRevenue").innerText = "₹" + data.total_revenue.toLocaleString("en-IN");
 
         } catch (err) {
             console.error('Error loading dashboard data:', err);
