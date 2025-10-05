@@ -8,14 +8,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function setActiveSection(section) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('selected'));
-        if(section==='dashboard'){dashboardSection.classList.add('active'); dashboardBtn.classList.add('selected');}
-        else if(section==='movies'){moviesSection.classList.add('active'); moviesBtn.classList.add('selected');}
+        if (section === 'dashboard') {
+            dashboardSection.classList.add('active');
+            dashboardBtn.classList.add('selected');
+        } else if (section === 'movies') {
+            moviesSection.classList.add('active');
+            moviesBtn.classList.add('selected');
+        }
     }
 
-    dashboardBtn.addEventListener('click', ()=>setActiveSection('dashboard'));
-    moviesBtn.addEventListener('click', ()=>setActiveSection('movies'));
+    dashboardBtn.addEventListener('click', () => setActiveSection('dashboard'));
+    moviesBtn.addEventListener('click', () => setActiveSection('movies'));
+
     const initialHash = window.location.hash.substring(1);
-    if(initialHash==='movies') setActiveSection('movies'); else setActiveSection('dashboard');
+    if (initialHash === 'movies') setActiveSection('movies'); 
+    else setActiveSection('dashboard');
 
     async function loadDashboardData() {
         try {
@@ -24,18 +31,20 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('moviesDistributing').textContent = data.movies_distributing;
             document.getElementById('totalAttendance').textContent = data.total_attendance;
             document.getElementById('totalRevenue').textContent = "₹" + data.total_revenue.toLocaleString();
-        } catch(err){console.error(err);}
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     async function loadMoviesData() {
-        try{
+        try {
             const res = await fetch('/api/movies-data');
             const shows = await res.json();
-            moviesContainer.innerHTML='';
-            shows.forEach(show=>{
+            moviesContainer.innerHTML = '';
+            shows.forEach(show => {
                 const card = document.createElement('div');
-                card.className='card';
-                card.innerHTML=`
+                card.className = 'card';
+                card.innerHTML = `
                     <div class="movie-info">
                         <h3>${show.movie}</h3>
                         <p>Theatre: ${show.theatre}</p>
@@ -46,64 +55,168 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 moviesContainer.appendChild(card);
             });
-        } catch(err){console.error(err);}
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     loadDashboardData();
     loadMoviesData();
-    setInterval(loadDashboardData,30000);
+    setInterval(loadDashboardData, 30000);
 });
 
 // CSV and Chart
-let chartInstance=null; let parsedData=[]; let isDataLoaded=false;
+let chartInstance = null;
+let parsedData = [];
+let isDataLoaded = false;
 
-function getTheaterKey(name){const n=String(name).toLowerCase(); if(n.includes('pvr')) return 'PVR'; if(n.includes('vanitha')) return 'VANITHA'; if(n.includes('four star')) return 'FOUR STAR'; return '';}
+function getTheaterKey(name) {
+    const n = String(name).toLowerCase();
+    if (n.includes('pvr')) return 'PVR';
+    if (n.includes('vanitha')) return 'VANITHA';
+    if (n.includes('four star')) return 'FOUR STAR';
+    return '';
+}
 
-function groupDataByDate(data){
-    const map={};
-    data.forEach(r=>{
-        const d=String(r.Timestamp).split(' ')[0];
-        const rev=parseFloat(r.Revenue)||0;
-        if(!map[d]) map[d]=0;
-        map[d]+=rev;
+function groupDataByDate(data) {
+    const map = {};
+    data.forEach(r => {
+        const d = String(r.Timestamp).split(' ')[0];
+        const rev = parseFloat(r.Revenue) || 0;
+        if (!map[d]) map[d] = 0;
+        map[d] += rev;
     });
-    return Object.keys(map).map(d=>({date:d,totalRevenue:map[d]})).sort((a,b)=>new Date(a.date)-new Date(b.date));
+    return Object.keys(map)
+        .map(d => ({ date: d, totalRevenue: map[d] }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-function processCSV(csvString){
-    Papa.parse(csvString,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:function(results){
-        parsedData=results.data.filter(r=>r.Timestamp && r.Theatre && r['Movie Name'] && r.Revenue!==undefined && r.Revenue!==null);
-        const title=document.getElementById('chart-title');
-        const select=document.getElementById('theater-select');
-        if(parsedData.length>0){isDataLoaded=true; updateDashboard(select.value); title.textContent=`Revenue Trend for ${select.value} (Daily)`; select.disabled=false;}
-        else{isDataLoaded=false; title.textContent="No valid CSV data"; select.disabled=true; if(chartInstance) chartInstance.destroy(); chartInstance=null;}
-    },error:function(err){console.error(err);document.getElementById('chart-title').textContent="Error parsing CSV";}});
+function processCSV(csvString) {
+    Papa.parse(csvString, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+            parsedData = results.data.filter(
+                r => r.Timestamp && r.Theatre && r['Movie Name'] && r.Revenue !== undefined && r.Revenue !== null
+            );
+            const title = document.getElementById('chart-title');
+            const select = document.getElementById('theater-select');
+            if (parsedData.length > 0) {
+                isDataLoaded = true;
+                updateDashboard(select.value);
+                title.textContent = `Revenue Trend for ${select.value} (Daily)`;
+                select.disabled = false;
+            } else {
+                isDataLoaded = false;
+                title.textContent = "No valid CSV data";
+                select.disabled = true;
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = null;
+            }
+        },
+        error: function (err) {
+            console.error(err);
+            document.getElementById('chart-title').textContent = "Error parsing CSV";
+        }
+    });
 }
 
-async function fetchCSVData(){
-    try{
-        const res=await fetch('bms_seatdata.csv');
-        const text=await res.text();
+async function fetchCSVData() {
+    try {
+        const res = await fetch('bms_seatdata.csv');
+        const text = await res.text();
         processCSV(text);
-    }catch(err){console.error(err); document.getElementById('chart-title').textContent="Failed to load CSV"; document.getElementById('theater-select').disabled=true;}
+    } catch (err) {
+        console.error(err);
+        document.getElementById('chart-title').textContent = "Failed to load CSV";
+        document.getElementById('theater-select').disabled = true;
+    }
 }
 
-function updateDashboard(theater){
-    if(!isDataLoaded) return;
-    const filtered=parsedData.filter(r=>getTheaterKey(r.Theatre)===theater);
-    document.getElementById('chart-title').textContent=`Revenue Trend for ${theater} (Daily)`;
-    updateChart(filtered,theater);
+function updateDashboard(theater) {
+    if (!isDataLoaded) return;
+    const filtered = parsedData.filter(r => getTheaterKey(r.Theatre) === theater);
+    document.getElementById('chart-title').textContent = `Revenue Trend for ${theater} (Daily)`;
+    updateChart(filtered, theater);
 }
 
-function updateChart(data,theater){
-    const daily=groupDataByDate(data);
-    const labels=daily.map(d=>d.date);
-    const revs=daily.map(d=>d.totalRevenue);
-    const ctx=document.getElementById('revenueLineChart').getContext('2d');
-    const chartData={labels:labels,datasets:[{label:`Daily Revenue (${theater})`,data:revs,borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,0.2)',pointBackgroundColor:'#4f46e5',tension:0.4,fill:true}]};
-    const options={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true},tooltip:{callbacks:{label:c=>`₹${c.parsed.y.toLocaleString()}`,title:c=>new Date(c[0].label).toLocaleDateString()}}},scales:{x:{title:{display:true,text:'Date'}},y:{title:{display:true,text:'Revenue (₹)'}}}};
-    if(chartInstance){chartInstance.data=chartData; chartInstance.options=options; chartInstance.update();}
-    else{chartInstance=new Chart(ctx,{type:'line',data:chartData,options:options});}
+function updateChart(data, theater) {
+    const daily = groupDataByDate(data);
+    const labels = daily.map(d => d.date);
+    const revs = daily.map(d => d.totalRevenue);
+    const ctx = document.getElementById('revenueLineChart').getContext('2d');
+
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            label: `Daily Revenue (${theater})`,
+            data: revs,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79,70,229,0.2)',
+            pointBackgroundColor: '#4f46e5',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true },
+            tooltip: {
+                callbacks: {
+                    label: c => `₹${c.parsed.y.toLocaleString()}`,
+                    title: c => new Date(c[0].label).toLocaleDateString()
+                }
+            }
+        },
+        scales: {
+            x: { title: { display: true, text: 'Date' } },
+            y: { title: { display: true, text: 'Revenue (₹)' } }
+        }
+    };
+
+    if (chartInstance) {
+        chartInstance.data = chartData;
+        chartInstance.options = options;
+        chartInstance.update();
+    } else {
+        chartInstance = new Chart(ctx, { type: 'line', data: chartData, options: options });
+    }
+
+    // 🔔 --- Revenue Drop Detection (Enhanced Rule) ---
+    const messageContainer = document.getElementById('theater-warning');
+    if (!messageContainer) return;
+    messageContainer.innerHTML = '';
+
+    if (revs.length >= 3) {
+        const last = revs[revs.length - 1];
+        const prev1 = revs[revs.length - 2];
+        const prev2 = revs[revs.length - 3];
+
+        const drop1 = prev1 > 0 ? ((prev1 - last) / prev1) * 100 : 0;
+        const drop2 = prev2 > 0 ? ((prev2 - prev1) / prev2) * 100 : 0;
+
+        const twoDayDecline = drop1 >= 15 && drop2 >= 15;
+        const bigDrop = drop1 >= 50;
+
+        if (twoDayDecline || bigDrop) {
+            messageContainer.innerHTML = `
+                <p class="warning-text">
+                    ⚠️ Alert: ${theater} is showing a significant audience drop.
+                    ${twoDayDecline 
+                        ? `Revenue has declined by over 15% for two consecutive days.` 
+                        : `Revenue dropped sharply by ${drop1.toFixed(1)}% in one day.`}
+                    Stakeholders should take precautionary measures to retain customers.
+                </p>
+            `;
+        }
+    }
 }
 
-document.addEventListener('DOMContentLoaded',function(){fetchCSVData();document.getElementById('theater-select').addEventListener('change',e=>updateDashboard(e.target.value));});
+document.addEventListener('DOMContentLoaded', function() {
+    fetchCSVData();
+    document.getElementById('theater-select').addEventListener('change', e => updateDashboard(e.target.value));
+});

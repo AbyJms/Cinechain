@@ -7,7 +7,10 @@
     <link rel="stylesheet" href="cinechain.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <script src="cinechain.js" defer></script>
   </head>
   <body>
@@ -17,7 +20,9 @@
         <h1>CineChain</h1>
       </div>
       <div class="nav-links">
-        <button id="dashboard-btn" class="nav-button selected">Dashboard</button>
+        <button id="dashboard-btn" class="nav-button selected">
+          Dashboard
+        </button>
         <button id="movies-btn" class="nav-button">Movies</button>
       </div>
     </nav>
@@ -29,7 +34,7 @@
           <h1>Dashboard</h1>
           <p>Welcome back! Here's your cinema distribution overview.</p>
         </div>
-        
+
         <div class="metrics-grid">
           <div class="metric metric-blue">
             <div class="icon-value">
@@ -58,17 +63,26 @@
         <div class="revenue-performance-container">
           <div class="performance-header">
             <div class="title-icon">
-                <i class="fas fa-chart-line"></i>
-                <h2 id="chart-title">Loading Revenue Trend...</h2>
+              <i class="fas fa-chart-line"></i>
+              <h2 id="chart-title">Loading Revenue Trend...</h2>
             </div>
             <select id="theater-select" disabled>
-                <option value="PVR">PVR</option>
-                <option value="VANITHA">VANITHA</option>
-                <option value="FOUR STAR">FOUR STAR</option>
+              <option value="PVR">PVR</option>
+              <option value="VANITHA">VANITHA</option>
+              <option value="FOUR STAR">FOUR STAR</option>
             </select>
           </div>
-          <div class="w-full h-128" style="height: 400px;">
+          <div class="w-full h-128" style="height: 400px">
             <canvas id="revenueLineChart"></canvas>
+            <div
+              id="theater-warning"
+              style="
+                margin-top: 10px;
+                text-align: center;
+                font-weight: 600;
+                color: #e11d48;
+              "
+            ></div>
           </div>
         </div>
       </section>
