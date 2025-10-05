@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dashboardSection = document.getElementById('dashboard');
     const moviesSection = document.getElementById('movies');
 
+    // --- Section switcher ---
     function setActiveSection(section) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('selected'));
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initialHash === 'movies') setActiveSection('movies');
     else setActiveSection('dashboard');
 
-    // --- Fetch live data from backend API ---
+    // --- Load dashboard data ---
     async function loadDashboardData() {
         try {
             const res = await fetch('/api/dashboard-data');
@@ -33,13 +34,44 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('moviesDistributing').textContent = data.movies_distributing;
             document.getElementById('totalAttendance').textContent = data.total_attendance;
             document.getElementById('totalRevenue').textContent = "₹" + data.total_revenue.toLocaleString();
-
         } catch (err) {
             console.error('Error loading dashboard data:', err);
         }
     }
 
-    // Load data on startup and refresh every 30 seconds
     loadDashboardData();
-    setInterval(loadDashboardData, 30000);
+    setInterval(loadDashboardData, 30000); // refresh every 30s
+
+    // --- Load movies section dynamically ---
+    async function loadMoviesData() {
+    try {
+        const res = await fetch('/api/movies-data');
+        const shows = await res.json();
+
+        console.log('Shows loaded:', shows); // <-- add this line
+
+        // Keep <h1> and remove old cards
+        moviesSection.querySelectorAll('.card').forEach(card => card.remove());
+
+        shows.forEach((show, index) => {
+            const card = document.createElement('div');
+            card.className = 'card movie-card';
+            card.innerHTML = `
+                <div class="movie-info">
+                    <h3>Show ${index + 1}</h3>
+                    <p>Theatre: <strong>${show.theatre}</strong></p>
+                    <p>Movie: <strong>${show.movie}</strong></p>
+                    <p>Seats: ${show.seats}</p>
+                    <p>Ticket Price: ₹${show.price}</p>
+                    <p>Revenue: ₹${show.revenue}</p>
+                </div>
+            `;
+            moviesSection.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Error loading movies data:', err);
+    }
+}
+
+    loadMoviesData();
 });
