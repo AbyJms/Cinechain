@@ -232,6 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const res = await fetch('/api/movies-data');
             const shows = await res.json();
 
+            // Clear previous cards
             moviesContainer.innerHTML = '';
 
             shows.forEach((show, index) => {
@@ -239,8 +240,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.className = 'card movie-card';
                 card.innerHTML = `
                     <div class="movie-info">
-                        <h3>${show.movie}</h3>
+                        <h3>Show ${index + 1}</h3>
                         <p>Theatre: <strong>${show.theatre}</strong></p>
+                        <p>Movie: <strong>${show.movie}</strong></p>
                         <p>Seats: ${show.seats}</p>
                         <p>Ticket Price: ₹${show.price}</p>
                         <p>Revenue: ₹${show.revenue}</p>
