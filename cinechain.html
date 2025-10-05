@@ -3,134 +3,112 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cinechain</title>
+    <title>CineChain</title>
     <link rel="stylesheet" href="cinechain.css" />
     <script src="cinechain.js" defer></script>
+<<<<<<< HEAD
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="ai.js"></script> 
     <script src="cinechain.js" defer></script>
+=======
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+>>>>>>> 980f2fd04e6bc63514c79d6eb5870701b7e444e7
   </head>
-
   <body>
-    <nav class="Sidebar">
-      <ul>
-        <h1 style="margin-left: 20px">CineChain</h1>
-        <li class="selected"><a href="#dashboard">Dashboard</a></li>
-        <li><a href="#movies">Movies</a></li>
-        <li><a href="#platforms">Platforms</a></li>
-        <li><a href="#stakeholders"></a>Stakeholders<a></li>
-      </ul>
+    <nav class="Navbar">
+      <div class="logo">
+        <i class="fas fa-th-large"></i>
+        <h1>CineChain</h1>
+      </div>
+      <div class="nav-links">
+        <button id="dashboard-btn" class="nav-button selected">Dashboard</button>
+        <button id="movies-btn" class="nav-button">Movies</button>
+      </div>
     </nav>
 
-    <main style="margin-left: 320px; padding: 32px">
-      <section id="dashboard">
-        <h1>Dashboard</h1>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap">
-          <div class="metric">
+    <main>
+      <section id="dashboard" class="content-section active">
+        <div class="header">
+          <h1>Dashboard</h1>
+          <p>Welcome back! Here's your cinema distribution overview.</p>
+        </div>
+        
+        <div class="metrics-grid">
+          <div class="metric metric-blue">
+            <div class="icon-value">
+              <i class="fas fa-tv"></i>
+              <p id="moviesDistributing">0</p>
+            </div>
             <h2>Movies Distributing</h2>
-            <p id="moviesDistributing">0</p>
           </div>
-          <div class="metric">
+          <div class="metric metric-green">
+            <div class="icon-value">
+              <i class="fas fa-users"></i>
+              <p id="totalAttendance">0</p>
+            </div>
             <h2>Total Attendance</h2>
-            <p id="totalAttendance">0</p>
           </div>
-          <div class="metric">
-            <h2>Active Channels</h2>
-            <p id="activeChannels">0</p>
-          </div>
-          <div class="metric">
+          <div class="metric metric-orange">
+            <div class="icon-value">
+              <i class="fas fa-indian-rupee-sign"></i>
+              <p id="totalRevenue">₹50</p>
+            </div>
             <h2>Total Revenue</h2>
-            <p id="totalRevenue">$50</p>
           </div>
         </div>
 
-        <div style="margin-top: 40px">
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 16px;
-              margin-bottom: 16px;
-            "
-          >
-            <h2 style="margin: 0">Revenue Performance</h2>
-            <select
-              id="monthSelector"
-              style="
-                padding: 8px 12px;
-                border-radius: 6px;
-                border: 1px solid #ccc;
-                font-size: 1em;
-              "
-            ></select>
+        <div class="revenue-performance-container">
+          <div class="performance-header">
+            <div class="title-icon">
+                <i class="fas fa-chart-line"></i>
+                <h2>Revenue Performance</h2>
+            </div>
+            <select id="monthSelector">
+                <option value="this-month">This Month</option>
+            </select>
           </div>
-          <canvas id="revenueChart" width="1000" height="400"></canvas>
+          <div class="no-data">
+              <i class="fas fa-chart-line no-data-icon"></i>
+              <p>No revenue data available yet</p>
+              <p class="subtitle">Start distributing movies to see performance metrics</p>
+          </div>
+          <div class="made-in-bolt">
+            Made in Bolt
+          </div>
         </div>
       </section>
 
-<section id="movies">
-  <h1>Movies</h1>
-
-<div class="card movie-card">
-  <div class="movie-info">
-    <h3>Top Movie</h3>
-    <p>Movie: <strong>Interstellar</strong></p>
-    <p>Revenue: $150,000</p>
-    <p>Rating: 9.2/10</p>
-  </div>
-  <img src="images/interstellar.webp" alt="Interstellar Poster" />
-</div>
-
-
-  <div class="card movie-card">
-    
-    <div class="movie-info">
-      <h3>Second Movie</h3>
-      <p>Movie: <strong>Inception</strong></p>
-      <p>Revenue: $120,000</p>
-      <p>Rating: 8.9/10</p>
-    </div>
-    <img src="images/inception.webp" alt="Inception Poster" />
-  </div>
-
-  <div class="card movie-card">
-    
-    <div class="movie-info">
-      <h3>Third Movie</h3>
-      <p>Movie: <strong>The Dark Knight</strong></p>
-      <p>Revenue: $110,000</p>
-      <p>Rating: 9.0/10</p>
-    </div>
-    <img src="images/darkknight.webp" alt="The Dark Knight Poster" />
-  </div>
-</section>
-
-      <section id="platforms">
-        <h1>Platforms</h1>
-        <div>
-          <div class="card">
-            <h3>Top Platform</h3>
-            <p>Platform: <strong>Netflix</strong></p>
-            <p>Movies Hosted: 150</p>
-            <p>Total Views: 1,200,000</p>
+      <section id="movies" class="content-section">
+        <h1>Movies</h1>
+        
+        <div class="card movie-card top-movie">
+          <div class="movie-info">
+            <h3>Top Movie</h3>
+            <p>Movie: <strong>Interstellar</strong></p>
+            <p>Revenue: ₹150,000</p>
+            <p>Audience: 10,000</p>
           </div>
-          <div class="card">
-            <h3>Second Platform</h3>
-            <p>Platform: <strong>Amazon Prime</strong></p>
-            <p>Movies Hosted: 120</p>
-            <p>Total Views: 950,000</p>
+        </div>
+        
+        <div class="card movie-card second-movie">
+          <div class="movie-info">
+            <h3>Second Movie</h3>
+            <p>Movie: <strong>Inception</strong></p>
+            <p>Revenue: ₹120,000</p>
+            <p>Audience: 30,0000</p>
           </div>
-          <div class="card">
-            <h3>Third Platform</h3>
-            <p>Platform: <strong>Disney+</strong></p>
-            <p>Movies Hosted: 100</p>
-            <p>Total Views: 800,000</p>
-          </div>
-      </section>
+        </div>
+        
+        </section>
+
     </main>
   </body>
+<<<<<<< HEAD
 </html>
 
 
 <!---->
+=======
+</html>
+>>>>>>> 980f2fd04e6bc63514c79d6eb5870701b7e444e7
