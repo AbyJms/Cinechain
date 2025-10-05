@@ -53,19 +53,28 @@ def get_movies_data():
     if not os.path.exists(CSV_FILE):
         return jsonify([])
 
-    data = []
+    combined = {}
     with open(CSV_FILE, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            data.append({
-                "theatre": row["Theatre"],
-                "movie": row["Movie Name"],
-                "seats": row["Green Seats"],
-                "price": row["Ticket Price"],
-                "revenue": row["Revenue"]
-            })
+            key = (row["Theatre"], row["Movie Name"])
+            seats = int(row["Green Seats"])
+            revenue = int(row["Revenue"])
+            price = int(row["Ticket Price"])
 
-    return jsonify(data)
+            if key in combined:
+                combined[key]["seats"] += seats
+                combined[key]["revenue"] += revenue
+            else:
+                combined[key] = {
+                    "theatre": row["Theatre"],
+                    "movie": row["Movie Name"],
+                    "seats": seats,
+                    "price": price,
+                    "revenue": revenue
+                }
+
+    return jsonify(list(combined.values()))
 
 if __name__ == '__main__':
     app.run(debug=True)
