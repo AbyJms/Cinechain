@@ -56,7 +56,7 @@ def get_dashboard_data():
     return response
 
 
-# --- Serve static files (JS, CSS) ---
+# --- Serve static files (JS, CSS) ----
 @app.route('/static/<path:path>')
 def serve_static(path):
     return send_from_directory('static', path)
