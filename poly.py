@@ -23,7 +23,7 @@ os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Timestamp", "Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue", "Screenshot Path"])
+        writer.writerow(["Timestamp", "Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue"])
 
 # --- Green seat detection ---
 def analyze_seats(image_path, show_preview=False):
