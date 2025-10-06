@@ -15,12 +15,15 @@ URLS = [
 
 CSV_FILE = "bms_seatdata.csv"
 INTERVAL_HOURS = 2.5  # Run every 2.5 hours
+SCREENSHOT_DIR = "screenshots"
 
-# --- Initialize CSV ---
+# --- Initialize folders and CSV ---
+os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Timestamp", "Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue"])
+        writer.writerow(["Timestamp", "Theatre", "Movie Name", "Green Seats", "Ticket Price", "Revenue", "Screenshot Path"])
 
 # --- Green seat detection ---
 def analyze_seats(image_path, show_preview=False):
@@ -54,7 +57,6 @@ def run_scraper():
         for theatre_url in URLS:
             theatre_name = theatre_url.split("/cinemas/kochi/")[1].split("/buytickets")[0].replace("-", " ").title()
             print(f"\nProcessing: {theatre_name}")
-
 
             i = 0
             price = [250, 135, 210]
@@ -114,8 +116,14 @@ def run_scraper():
                 except:
                     movie_name = "Unknown Movie"
 
-            # --- Screenshot seat layout ---
-            img_path = f"{theatre_name.replace(' ', '_')}_seats.png"
+            # --- Screenshot folder structure ---
+            today_folder = os.path.join(SCREENSHOT_DIR, datetime.now().strftime("%Y-%m-%d"))
+            os.makedirs(today_folder, exist_ok=True)
+            timestamp_str = datetime.now().strftime("%H-%M-%S")
+            img_name = f"{theatre_name.replace(' ', '_')}_{timestamp_str}.png"
+            img_path = os.path.join(today_folder, img_name)
+
+            # --- Capture seat layout screenshot ---
             page.screenshot(path=img_path, clip={"x": 300, "y": 180, "width": 800, "height": 1200})
             green_count = analyze_seats(img_path)
 
@@ -129,7 +137,7 @@ def run_scraper():
 
             revenue = green_count * ticket_price
 
-            # --- Save data ---
+            # --- Save data to CSV ---
             with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([
@@ -138,10 +146,12 @@ def run_scraper():
                     movie_name,
                     green_count,
                     ticket_price,
-                    revenue
+                    revenue,
+                    img_path
                 ])
 
             print(f"{movie_name} | {green_count} seats | ₹{ticket_price} | ₹{revenue}")
+            print(f"Screenshot saved at: {img_path}")
             page.close()
 
         browser.close()
@@ -154,4 +164,4 @@ while True:
     except Exception as e:
         print(f"Error during scraping: {e}")
     print(f"Sleeping for {INTERVAL_HOURS} hours...\n")
-    time.sleep(INTERVAL_HOURS * 3)
+    time.sleep(INTERVAL_HOURS * 3600)  # fixed correct conversion to seconds
