@@ -1,7 +1,5 @@
 ## Cinechain
 
-## Description
-
 CineChain is an automated analysis system that estimates theatre occupancy and movie revenue by analyzing seat booking data from online ticketing platforms.
 
 It navigates to currently running movies in theatres, accesses the seat booking interface, captures seating layouts, and computes approximate audience count and revenue per show.
