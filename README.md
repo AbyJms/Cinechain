@@ -36,10 +36,10 @@ It navigates to currently running movies in theatres, accesses the seat booking 
 
 ## Status
 
-This project is currently in development.
+This project is currently in hiatus.
 
 * Core functionality is implemented
-* Accuracy and stability are still being improved
+* Accuracy and stability can very much be improved
 * UI and visualization features are minimal
 
 ## Future Improvements
